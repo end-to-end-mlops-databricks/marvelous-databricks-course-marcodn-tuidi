@@ -8,9 +8,10 @@ def test_data():
     test_data_df = pd.DataFrame(
         data={
             "age": [10, 4, 34, 25, 56, 21],
-            "score": [4, 5, 6, 8, 9, 8],
+            "score": [4, 5, -6, 8, 9, 8],
             "education": [0, 0, 1, 1, 0, 1],
             "gender": ["Male", "Female", "Male", "Female", "Male", "Female"],
+            "interest": ["Sport", "Art", "Unknown", "Sport", None, None],
             "raw_target": ["INTJ", "INFJ", "ISTJ", "ISTP", "INVALID", None]
         }
     )
@@ -20,7 +21,7 @@ def test_data():
 def test_config():
     test_config_dict = {
         "num_features": ["age", "score"],
-        "cat_features": ["gender", "education"],
+        "cat_features": ["gender", "education", "interest"],
         "raw_target": "raw_target",
         "target": "target"
     }

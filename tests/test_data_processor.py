@@ -16,6 +16,10 @@ def test_create_target(data_processor_train):
     target = data_processor_train.config["target"]
     raw_target = data_processor_train.config["raw_target"]
     data_processor_train.create_target(target, raw_target)
-    print(list(data_processor_train.df[target]))
-    print(expected_target)
     assert list(data_processor_train.df[target]).__eq__(expected_target)
+
+def test_drop_na_target(data_processor_train):
+    expected_length = 4
+    data_processor_train.preprocess_data()
+    result_length = len(data_processor_train.y)
+    assert result_length == expected_length

@@ -8,7 +8,6 @@ parameters:
 
 num_features:
   - Age
-  - Education
   - Introversion Score
   - Sensing Score
   - Thinking Score
@@ -17,6 +16,7 @@ num_features:
 cat_features:
   - Gender
   - Interest
+  - Education
 
 raw_target: Personality
 

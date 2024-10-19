@@ -1,6 +1,11 @@
 import pandas as pd
 import numpy as np
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
 import logging
+from sklearn.model_selection import train_test_split
 
 class DataProcessor:
 
@@ -55,7 +60,36 @@ class DataProcessor:
         self.X = self.df[train_features]
 
         # train features preprocessing steps
+        # numeric features
+        numeric_transformer = Pipeline(steps=[
+            ('imputer', SimpleImputer(strategy='median')),
+            ('scaler', StandardScaler())
+        ])
 
+        # categorical features
+        categorical_transformer = Pipeline(steps=[
+            ('imputer', SimpleImputer(
+                strategy='constant', fill_value='Unknown'
+                )
+            ),
+            ('onehot', OneHotEncoder(handle_unknown='ignore'))
+        ])
+
+        # Combine preprocessing steps
+        self.preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', numeric_transformer, self.config['num_features']),
+                ('cat', categorical_transformer, self.config['cat_features'])
+            ]
+        )
+    
+    def split_data(self, test_size=0.2, random_state=42):
+        return train_test_split(
+            self.X, 
+            self.y, 
+            test_size=test_size, 
+            random_state=random_state
+        )
 
         
 
