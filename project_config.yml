@@ -1,0 +1,23 @@
+catalog_name: marvelous_mlops
+schema_name: personality_types
+
+parameters:
+  learning_rate: 0.01
+  n_estimators: 1000
+  max_depth: 6
+
+num_features:
+  - Age
+  - Education
+  - Introversion Score
+  - Sensing Score
+  - Thinking Score
+  - Judging Score
+
+cat_features:
+  - Gender
+  - Interest
+
+raw_target: Personality
+
+target: target
