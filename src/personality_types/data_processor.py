@@ -4,6 +4,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
+from custom_transforms import GenderTransform, EducationTransform
 import logging
 from sklearn.model_selection import train_test_split
 
@@ -67,6 +68,10 @@ class DataProcessor:
         ])
 
         # categorical features
+        standard_categorical = list(
+            set(self.config['cat_features']) - set(["Gender", "Education"])
+        )
+
         categorical_transformer = Pipeline(steps=[
             ('imputer', SimpleImputer(
                 strategy='constant', fill_value='Unknown'
@@ -75,11 +80,22 @@ class DataProcessor:
             ('onehot', OneHotEncoder(handle_unknown='ignore'))
         ])
 
+        gender_transformer = Pipeline(steps=[
+            ('force_value', GenderTransform()),
+            ('onehot', OneHotEncoder(handle_unknown='ignore'))
+        ])
+
+        education_transform = Pipeline(steps=[
+            ('force_value', EducationTransform())
+        ])
+
         # Combine preprocessing steps
         self.preprocessor = ColumnTransformer(
             transformers=[
                 ('num', numeric_transformer, self.config['num_features']),
-                ('cat', categorical_transformer, self.config['cat_features'])
+                ("gender", gender_transformer, "Gender"),
+                ("education", education_transform, "Education"),
+                ('cat', categorical_transformer, standard_categorical)
             ]
         )
     
@@ -88,7 +104,8 @@ class DataProcessor:
             self.X, 
             self.y, 
             test_size=test_size, 
-            random_state=random_state
+            random_state=random_state,
+            stratify=self.y
         )
 
         
