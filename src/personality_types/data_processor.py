@@ -99,8 +99,8 @@ class DataProcessor:
         The preprocessor is built and stored as an attribute, and `X` and `y` 
         are set up based on the feature matrix and target.
         """
-        num_features = self.config['num_features']
-        cat_features = self.config['cat_features']
+        num_features = self.config["num_features"]
+        cat_features = self.config["cat_features"]
         train_features = num_features + cat_features
 
         # remove columns with missing raw target
@@ -118,39 +118,39 @@ class DataProcessor:
         # train features preprocessing steps
         # numeric features
         numeric_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='median')),
-            ('scaler', StandardScaler())
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler())
         ])
 
         # categorical features
         standard_categorical = list(
-            set(self.config['cat_features']) - set(["Gender", "Education"])
+            set(self.config["cat_features"]) - set(["Gender", "Education"])
         )
 
         categorical_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(
-                strategy='constant', fill_value='Unknown'
+            ("imputer", SimpleImputer(
+                strategy="constant", fill_value="Unknown"
                 )
             ),
-            ('onehot', OneHotEncoder(handle_unknown='ignore'))
+            ("onehot", OneHotEncoder(handle_unknown="ignore"))
         ])
 
         gender_transformer = Pipeline(steps=[
-            ('force_value', GenderTransform()),
-            ('onehot', OneHotEncoder(handle_unknown='ignore'))
+            ("force_value", GenderTransform()),
+            ("onehot", OneHotEncoder(handle_unknown="ignore"))
         ])
 
         education_transform = Pipeline(steps=[
-            ('force_value', EducationTransform())
+            ("force_value", EducationTransform())
         ])
 
         # Combine preprocessing steps
         self.preprocessor = ColumnTransformer(
             transformers=[
-                ('num', numeric_transformer, self.config['num_features']),
+                ("num", numeric_transformer, self.config["num_features"]),
                 ("gender", gender_transformer, "Gender"),
                 ("education", education_transform, "Education"),
-                ('cat', categorical_transformer, standard_categorical)
+                ("cat", categorical_transformer, standard_categorical)
             ]
         )
     
@@ -179,8 +179,3 @@ class DataProcessor:
             random_state=random_state,
             stratify=self.y
         )
-
-        
-
-        
-
