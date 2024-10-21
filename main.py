@@ -1,14 +1,12 @@
-import sys
-import os
-from src.personality_types.data_processor import DataProcessor
 import yaml
+from src.personality_types.data_processor import DataProcessor
 
 volume_path = "/Volumes/marvelous_dev_ops/personality_types/data/"
 file_name = "people_personality_types.csv"
 data_path = volume_path + file_name
 
 # Load configuration
-with open('project_config.yml', 'r') as file:
+with open("project_config.yml", "r") as file:
     config = yaml.safe_load(file)
 
 print("Configuration loaded:")
