@@ -1,10 +1,5 @@
 import sys
 import os
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "src/personality_types")
-    ))
-
 from src.personality_types.data_processor import DataProcessor
 import yaml
 

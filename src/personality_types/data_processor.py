@@ -4,7 +4,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from custom_transforms import GenderTransform, EducationTransform
+from src.personality_types.custom_transforms import (
+    GenderTransform, EducationTransform
+)
 import logging
 from sklearn.model_selection import train_test_split
 from typing import Optional, Tuple, Dict, Any
