@@ -19,11 +19,11 @@ def test_data() -> pd.DataFrame:
     """
     test_data_df = pd.DataFrame(
         data={
-            "Age": [10, 4, 34, 25, 56, 21],
-            "Score": [np.nan, 5, 5, 8, 9, 8],
-            "Education": [np.nan, 4, 1, 1, 0, 1],
-            "Gender": ["Male", None, "Male", "Female", "Male", "Female"],
-            "Interest": ["Sport", "Art", "Unknown", "Sport", None, None],
+            "age": [10, 4, 34, 25, 56, 21],
+            "score": [np.nan, 5, 5, 8, 9, 8],
+            "education": [np.nan, 4, 1, 1, 0, 1],
+            "gender": ["Male", None, "Male", "Female", "Male", "Female"],
+            "interest": ["Sport", "Art", "Unknown", "Sport", None, None],
             "raw_target": ["INTJ", "INFJ", "ISTJ", "ISTP", "INVALID", None],
         }
     )
@@ -40,8 +40,8 @@ def test_config() -> ProjectConfig:
         features and target information.
     """
     test_config_dict = {
-        "num_features": ["Age", "Score"],
-        "cat_features": ["Gender", "Education", "Interest"],
+        "num_features": ["age", "score"],
+        "cat_features": ["gender", "education", "interest"],
         "raw_target": "raw_target",
         "target": "target",
         "catalog_name": "catalog_test",
@@ -105,11 +105,11 @@ def test_data_split() -> pd.DataFrame:
     """
     test_data_df = pd.DataFrame(
         data={
-            "Age": [10, 4, 34, 25] * 4,
-            "Score": [np.nan, 5, 5, 8] * 4,
-            "Education": [np.nan, 4, 1, 1] * 4,
-            "Gender": ["Male", None, "Male", "Female"] * 4,
-            "Interest": ["Sport", "Art", "Unknown", "Sport"] * 4,
+            "age": [10, 4, 34, 25] * 4,
+            "score": [np.nan, 5, 5, 8] * 4,
+            "education": [np.nan, 4, 1, 1] * 4,
+            "gender": ["Male", None, "Male", "Female"] * 4,
+            "interest": ["Sport", "Art", "Unknown", "Sport"] * 4,
             "raw_target": ["INTJ", "INFJ", "ISTJ", "ISTP"] * 4,
         }
     )

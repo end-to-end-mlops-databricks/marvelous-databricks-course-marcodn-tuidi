@@ -1,7 +1,10 @@
 import logging
 
+from databricks.connect import DatabricksSession
 from src.personality_types.config import ProjectConfig
 from src.personality_types.data_processor import DataProcessor
+
+spark = DatabricksSession.builder.getOrCreate()
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -33,4 +36,4 @@ logger.info(
 )
 
 logger.info("Save train and test sets to catalog")
-data_processor.save_to_catalog(X_train, X_test)
+data_processor.save_to_catalog(X_train, X_test, spark)

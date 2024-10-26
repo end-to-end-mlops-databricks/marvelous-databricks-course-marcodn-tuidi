@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 import pandas as pd
 import pyspark.sql.functions as F
-from databricks.connect import DatabricksSession
+from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
@@ -14,8 +14,6 @@ from src.personality_types.custom_transforms import (
     EducationTransform,
     GenderTransform,
 )
-
-spark = DatabricksSession.builder.getOrCreate()
 
 
 class DataProcessor:
@@ -147,7 +145,7 @@ class DataProcessor:
 
         # categorical features
         standard_categorical = list(
-            set(self.config.cat_features) - set(["Gender", "Education"])
+            set(self.config.cat_features) - set(["gender", "education"])
         )
 
         categorical_transformer = Pipeline(
@@ -175,8 +173,8 @@ class DataProcessor:
         self.preprocessor = ColumnTransformer(
             transformers=[
                 ("num", numeric_transformer, num_features),
-                ("gender", gender_transformer, "Gender"),
-                ("education", education_transform, "Education"),
+                ("gender", gender_transformer, "gender"),
+                ("education", education_transform, "education"),
                 ("cat", categorical_transformer, standard_categorical),
             ]
         )
@@ -208,7 +206,10 @@ class DataProcessor:
         )
 
     def save_to_catalog(
-        self, train_set: pd.DataFrame, test_set: pd.DataFrame
+        self,
+        train_set: pd.DataFrame,
+        test_set: pd.DataFrame,
+        spark: SparkSession,
     ) -> None:
         """
         Save the train and test sets into unity catalog. Adds update timestamp
@@ -217,6 +218,7 @@ class DataProcessor:
         Args:
             train_set (pd.DataFrame): Training set to be saved.
             test_set (pd.DataFrame): Test set to be saved.
+            spark (SparkSession): current spark session.
         """
         train_set_with_timestamp = spark.createDataFrame(train_set).withColumn(
             "update_timestamp_utc",
