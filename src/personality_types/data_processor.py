@@ -25,8 +25,8 @@ class DataProcessor:
         df (pd.DataFrame): Loaded dataset as a pandas DataFrame.
         train (bool): A flag indicating whether the data is for training
             (True) or inference (False).
-        config (dict): A configuration dictionary containing feature names and
-            other processing parameters.
+        config (ProjectConfig): A configuration object containing feature
+            names and other processing parameters.
         X (Optional[pd.DataFrame]): The feature matrix.
         y (Optional[pd.Series]): The target vector.
         preprocessor (Optional[ColumnTransformer]): The preprocessor used for
@@ -207,8 +207,10 @@ class DataProcessor:
 
     def save_to_catalog(
         self,
-        train_set: pd.DataFrame,
-        test_set: pd.DataFrame,
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+        y_train: pd.Series,
+        y_test: pd.Series,
         spark: SparkSession,
     ) -> None:
         """
@@ -216,10 +218,16 @@ class DataProcessor:
         to simulate delta changes.
 
         Args:
-            train_set (pd.DataFrame): Training set to be saved.
-            test_set (pd.DataFrame): Test set to be saved.
+            X_train (pd.DataFrame): Training set to be saved.
+            X_test (pd.DataFrame): Test set to be saved.
+            y_train (pd.Series): Train target to be saved inside train set.
+            y_test (pd.Series): Test target to be saved inside test set.
             spark (SparkSession): current spark session.
         """
+
+        train_set = pd.concat([X_train, y_train], axis=1)
+        test_set = pd.concat([X_test, y_test], axis=1)
+
         train_set_with_timestamp = spark.createDataFrame(train_set).withColumn(
             "update_timestamp_utc",
             F.to_utc_timestamp(F.current_timestamp(), "UTC"),
