@@ -1,6 +1,7 @@
 from databricks.connect import DatabricksSession
 from src.personality_types.config import ProjectConfig
 from src.personality_types.data_processor import DataProcessor
+from src.personality_types.personality_model import PersonalityModel
 from src.utils.logger_utils import set_logger
 
 spark = DatabricksSession.builder.getOrCreate()
@@ -23,13 +24,15 @@ data_processor.preprocess_data()
 preprocessor = data_processor.preprocessor
 logger.info("Data preprocessed.")
 
-# Split the data
-X_train, X_test, y_train, y_test = data_processor.split_data()
-logger.info("Data split into training and test sets.")
+print(config.parameters)
+personality_model = PersonalityModel(preprocessor, config)
 
-logger.info(
-    f"Training set shape: {X_train.shape}, Test set shape: {X_test.shape}"
+git_sha = "test"
+
+run_tags = {"git_sha": git_sha, "branch": "week_2"}
+
+personality_model.train_and_log(
+    spark,
+    "/Users/marco.dinardo@tuidi.it/personality-types",
+    run_tags,
 )
-
-logger.info("Save train and test sets to catalog")
-data_processor.save_to_catalog(X_train, X_test, y_train, y_test, spark)
