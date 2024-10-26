@@ -2,6 +2,8 @@ from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import pyspark.sql.functions as F
+from databricks.connect import DatabricksSession
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
@@ -12,6 +14,8 @@ from src.personality_types.custom_transforms import (
     EducationTransform,
     GenderTransform,
 )
+
+spark = DatabricksSession.builder.getOrCreate()
 
 
 class DataProcessor:
@@ -45,7 +49,7 @@ class DataProcessor:
             config (dict): Configuration dictionary containing feature names
                 and target variable details.
         """
-        self.df = self.load_data(data_path)
+        self.df = self.rename_columns(self.load_data(data_path))
         self.train = train
         self.config = config
         self.X = None
@@ -63,6 +67,21 @@ class DataProcessor:
             pd.DataFrame: Loaded dataset.
         """
         return pd.read_csv(data_path)
+
+    @staticmethod
+    def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Renames columns of a pandas dataframe so that columns names are
+        lowercase and follow snake case convention.
+
+        Args:
+            df (pd.DataFrame): Input dataframe.
+
+        Returns:
+            pd.DataFrame: DataFrame with renamed columns.
+        """
+        df.columns = df.columns.str.lower().str.replace(" ", "_")
+        return df
 
     def create_target(self, target: str, raw_target: str) -> None:
         """
@@ -186,4 +205,51 @@ class DataProcessor:
             test_size=test_size,
             random_state=random_state,
             stratify=self.y,
+        )
+
+    def save_to_catalog(
+        self, train_set: pd.DataFrame, test_set: pd.DataFrame
+    ) -> None:
+        """
+        Save the train and test sets into unity catalog. Adds update timestamp
+        to simulate delta changes.
+
+        Args:
+            train_set (pd.DataFrame): Training set to be saved.
+            test_set (pd.DataFrame): Test set to be saved.
+        """
+        train_set_with_timestamp = spark.createDataFrame(train_set).withColumn(
+            "update_timestamp_utc",
+            F.to_utc_timestamp(F.current_timestamp(), "UTC"),
+        )
+
+        test_set_with_timestamp = spark.createDataFrame(test_set).withColumn(
+            "update_timestamp_utc",
+            F.to_utc_timestamp(F.current_timestamp(), "UTC"),
+        )
+
+        shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        train_table_path = f"{shema_path}.train_set"
+        test_table_path = f"{shema_path}.test_set"
+
+        train_set_with_timestamp.write.mode("append").saveAsTable(
+            train_table_path
+        )
+
+        test_set_with_timestamp.write.mode("append").saveAsTable(
+            test_table_path
+        )
+
+        spark.sql(
+            f"""
+            ALTER TABLE {train_table_path}
+            SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')
+            """
+        )
+
+        spark.sql(
+            f"""
+            ALTER TABLE {test_table_path}
+            SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')
+            """
         )

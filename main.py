@@ -1,6 +1,6 @@
 import logging
 
-import yaml
+from src.personality_types.config import ProjectConfig
 from src.personality_types.data_processor import DataProcessor
 
 logging.basicConfig(
@@ -12,12 +12,8 @@ volume_path = "/Volumes/marvelous_dev_ops/personality_types/data/"
 file_name = "people_personality_types.csv"
 data_path = volume_path + file_name
 
-# Load configuration
-with open("project_config.yml", "r") as file:
-    config = yaml.safe_load(file)
-
-print("Configuration loaded:")
-print(yaml.dump(config, default_flow_style=False))
+config = ProjectConfig.from_yaml(config_path="project_config.yml")
+logger.info("Configuration loaded.")
 
 # Initialize DataProcessor
 data_processor = DataProcessor(data_path, True, config)
@@ -32,20 +28,9 @@ logger.info("Data preprocessed.")
 X_train, X_test, y_train, y_test = data_processor.split_data()
 logger.info("Data split into training and test sets.")
 
-logger.debug(
+logger.info(
     f"Training set shape: {X_train.shape}, Test set shape: {X_test.shape}"
 )
-print(f"Training set shape: {X_train.shape}, Test set shape: {X_test.shape}")
 
-X_train_preprocessed = preprocessor.fit_transform(X_train)
-X_test_preprocessed = preprocessor.fit_transform(X_test)
-logger.info("Data processed.")
-
-print(
-    f"""Processed training set shape: {X_train_preprocessed.shape} Processed
-    test set shape: {X_test_preprocessed.shape}"""
-)
-logger.debug(
-    f"""Processed training set shape: {X_train_preprocessed.shape} Processed
-    test set shape: {X_test_preprocessed.shape}"""
-)
+logger.info("Save train and test sets to catalog")
+data_processor.save_to_catalog(X_train, X_test)
