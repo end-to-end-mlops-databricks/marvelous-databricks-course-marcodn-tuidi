@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -7,6 +7,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from src.personality_types.config import ProjectConfig
 from src.personality_types.custom_transforms import (
     EducationTransform,
     GenderTransform,
@@ -31,7 +32,7 @@ class DataProcessor:
     """
 
     def __init__(
-        self, data_path: str, train: bool, config: Dict[str, Any]
+        self, data_path: str, train: bool, config: ProjectConfig
     ) -> None:
         """
         Initializes the DataProcessor with the data path, training flag,
@@ -100,14 +101,14 @@ class DataProcessor:
         The preprocessor is built and stored as an attribute, and `X` and `y`
         are set up based on the feature matrix and target.
         """
-        num_features = self.config["num_features"]
-        cat_features = self.config["cat_features"]
+        num_features = self.config.num_features
+        cat_features = self.config.cat_features
         train_features = num_features + cat_features
 
         # remove columns with missing raw target
         if self.train:
-            raw_target = self.config["raw_target"]
-            target = self.config["target"]
+            raw_target = self.config.raw_target
+            target = self.config.target
 
             self.create_target(target, raw_target)
             self.df = self.df.dropna(subset=[target])
@@ -127,7 +128,7 @@ class DataProcessor:
 
         # categorical features
         standard_categorical = list(
-            set(self.config["cat_features"]) - set(["Gender", "Education"])
+            set(self.config.cat_features) - set(["Gender", "Education"])
         )
 
         categorical_transformer = Pipeline(
@@ -154,7 +155,7 @@ class DataProcessor:
         # Combine preprocessing steps
         self.preprocessor = ColumnTransformer(
             transformers=[
-                ("num", numeric_transformer, self.config["num_features"]),
+                ("num", numeric_transformer, num_features),
                 ("gender", gender_transformer, "Gender"),
                 ("education", education_transform, "Education"),
                 ("cat", categorical_transformer, standard_categorical),

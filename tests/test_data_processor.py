@@ -39,8 +39,8 @@ def test_create_target(data_processor_train: pytest.FixtureRequest) -> None:
         None,
         None,
     ]
-    target = data_processor_train.config["target"]
-    raw_target = data_processor_train.config["raw_target"]
+    target = data_processor_train.config.target
+    raw_target = data_processor_train.config.raw_target
     data_processor_train.create_target(target, raw_target)
     assert list(data_processor_train.df[target]).__eq__(expected_target)
 

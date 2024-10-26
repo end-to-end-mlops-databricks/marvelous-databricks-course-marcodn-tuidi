@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from src.personality_types.config import ProjectConfig
 from src.personality_types.data_processor import DataProcessor
 
 
@@ -30,28 +31,31 @@ def test_data() -> pd.DataFrame:
 
 
 @pytest.fixture
-def test_config() -> dict:
+def test_config() -> ProjectConfig:
     """
-    Fixture to provide a sample configuration dictionary for data processing.
+    Fixture to provide a sample configuration for data processing.
 
     Returns:
-        dict: Configuration dictionary containing numeric, categorical features
-            and target information.
+        ProjectConfig: Configuration dictionary containing numeric, categorical
+        features and target information.
     """
     test_config_dict = {
         "num_features": ["Age", "Score"],
         "cat_features": ["Gender", "Education", "Interest"],
         "raw_target": "raw_target",
         "target": "target",
+        "catalog_name": "catalog_test",
+        "schema_name": "schema_test",
+        "parameters": {"learning_rate": 1},
     }
-    return test_config_dict
+    return ProjectConfig.from_dict(test_config_dict)
 
 
 @pytest.fixture
 def data_processor_train(
     tmp_path: pytest.TempPathFactory,
     test_data: pd.DataFrame,
-    test_config: dict,
+    test_config: ProjectConfig,
 ) -> DataProcessor:
     """
     Fixture to create and return a DataProcessor object for training data.
@@ -59,7 +63,7 @@ def data_processor_train(
     Args:
         tmp_path (pytest.TempPathFactory): Temporary directory path.
         test_data (pd.DataFrame): Test data to be processed.
-        test_config (dict): Configuration for data processing.
+        test_config (ProjectConfig): Configuration for data processing.
 
     Returns:
         DataProcessor: Instance of DataProcessor initialized with test data
@@ -116,7 +120,7 @@ def test_data_split() -> pd.DataFrame:
 def data_processor_train_split(
     tmp_path: pytest.TempPathFactory,
     test_data_split: pd.DataFrame,
-    test_config: dict,
+    test_config: ProjectConfig,
 ) -> DataProcessor:
     """
     Fixture to create and return a DataProcessor object for split test data.
@@ -124,7 +128,7 @@ def data_processor_train_split(
     Args:
         tmp_path (pytest.TempPathFactory): Temporary directory path.
         test_data_split (pd.DataFrame): Split test data to be processed.
-        test_config (dict): Configuration for data processing.
+        test_config (ProjectConfig): Configuration for data processing.
 
     Returns:
         DataProcessor: Instance of DataProcessor initialized with split test
