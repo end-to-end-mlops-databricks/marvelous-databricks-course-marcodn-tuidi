@@ -117,8 +117,8 @@ class PersonalityModel:
         logger.info(f"Load test data from {test_table_path}")
         test_set_spark = spark.table(test_table_path)
 
-        X_train = train_set_spark.drop(self.config.target).toPandas()
-        X_test = test_set_spark.drop(self.config.target).toPandas()
+        X_train = train_set_spark.drop(self.config.target, "id").toPandas()
+        X_test = test_set_spark.drop(self.config.target, "id").toPandas()
 
         y_train = train_set_spark.select(self.config.target).toPandas()
         y_test = test_set_spark.select(self.config.target).toPandas()

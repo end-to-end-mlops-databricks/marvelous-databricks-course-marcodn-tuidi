@@ -111,6 +111,13 @@ class DataProcessor:
             ),
         )
 
+    def add_id_column(self):
+        """
+        Add string id columns to dataframe.
+        """
+        self.X["id"] = np.arange(len(self.X))
+        self.X["id"] = self.X["id"].astype(str)
+
     def preprocess_data(self) -> None:
         """
         Preprocesses the dataset by handling missing values, scaling numeric

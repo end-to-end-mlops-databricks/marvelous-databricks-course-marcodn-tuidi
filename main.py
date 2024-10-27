@@ -24,6 +24,7 @@ preprocessor = data_processor.preprocessor
 logger.info("Data preprocessed.")
 
 # Split the data
+data_processor.add_id_column()
 X_train, X_test, y_train, y_test = data_processor.split_data()
 logger.info("Data split into training and test sets.")
 
