@@ -31,7 +31,7 @@ git_sha = "test"
 
 run_tags = {"git_sha": git_sha, "branch": "week_2"}
 
-personality_model.train_and_log(
+model_version = personality_model.train_and_log(
     spark,
     "/Users/marco.dinardo@tuidi.it/personality-types",
     run_tags,

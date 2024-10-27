@@ -105,7 +105,7 @@ class PersonalityModel:
         spark: SparkSession,
         experiment_name: str,
         run_tags: Dict[str, Any],
-    ) -> None:
+    ) -> int:
         shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
         train_table_path = f"{shema_path}.train_set"
         test_table_path = f"{shema_path}.test_set"
@@ -173,3 +173,11 @@ class PersonalityModel:
                 artifact_path="randomforest-pipeline-model",
                 signature=signature,
             )
+
+        model_version = mlflow.register_model(
+            model_uri=f"runs:/{run_id}/randomforest-pipeline-model",
+            name=f"{shema_path}.personality_model_basic",
+            tags=run_tags,
+        )
+
+        return model_version
