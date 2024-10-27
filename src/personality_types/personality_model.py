@@ -111,14 +111,16 @@ class PersonalityModel:
         train_table_path = f"{shema_path}.train_set"
         test_table_path = f"{shema_path}.test_set"
 
+        drop_columns_train = ["id", "update_timestamp_utc", self.config.target]
+
         logger.info(f"Load train data from {train_table_path}")
         train_set_spark = spark.table(train_table_path)
 
         logger.info(f"Load test data from {test_table_path}")
         test_set_spark = spark.table(test_table_path)
 
-        X_train = train_set_spark.drop(self.config.target, "id").toPandas()
-        X_test = test_set_spark.drop(self.config.target, "id").toPandas()
+        X_train = train_set_spark.drop(*drop_columns_train).toPandas()
+        X_test = test_set_spark.drop(*drop_columns_train).toPandas()
 
         y_train = train_set_spark.select(self.config.target).toPandas()
         y_test = test_set_spark.select(self.config.target).toPandas()

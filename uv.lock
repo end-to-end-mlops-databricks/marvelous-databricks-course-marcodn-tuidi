@@ -358,6 +358,23 @@ wheels = [
 ]
 
 [[package]]
+name = "databricks-feature-lookup"
+version = "0.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-cosmos" },
+    { name = "boto3" },
+    { name = "mlflow" },
+    { name = "pymysql" },
+    { name = "pyyaml" },
+    { name = "sqlalchemy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1e/2d/a857816501c22502575dd43220bda482d20ccd7f320088d58e7484035263/databricks-feature-lookup-0.4.1.tar.gz", hash = "sha256:8daa0581434b172980b9920f4a09521a1489b86825a50b076cd082bd78a6902b", size = 60493 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9e/6a/0db77a724089ccc04b5384e611fb001c763376ef02d57da50df47b036a46/databricks_feature_lookup-0.4.1-py3-none-any.whl", hash = "sha256:c9db0d3c3d57824bd6fb02c4bc9079cf81231f407bf5981d88270f3a397eb32f", size = 70526 },
+]
+
+[[package]]
 name = "databricks-sdk"
 version = "0.32.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1065,6 +1082,7 @@ dependencies = [
     { name = "cffi" },
     { name = "cloudpickle" },
     { name = "databricks-feature-engineering" },
+    { name = "databricks-feature-lookup" },
     { name = "lightgbm" },
     { name = "matplotlib" },
     { name = "mlflow" },
@@ -1094,6 +1112,7 @@ requires-dist = [
     { name = "cloudpickle", specifier = ">=3.0.0,<4" },
     { name = "databricks-connect", marker = "extra == 'dev'", specifier = ">=15.4.1,<16" },
     { name = "databricks-feature-engineering", specifier = ">=0.6,<1" },
+    { name = "databricks-feature-lookup", specifier = ">=0.4.1" },
     { name = "databricks-sdk", marker = "extra == 'dev'", specifier = ">=0.32.0,<0.33" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29.5,<7" },
     { name = "lightgbm", specifier = ">=4.5.0,<5" },
@@ -1468,6 +1487,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/8e/62/8336eff65bcbc8e4cb5d05b55faf041285951b6e80f33e2bff2024788f31/pygments-2.18.0.tar.gz", hash = "sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199", size = 4891905 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/3f/01c8b82017c199075f8f788d0d906b9ffbbc5a47dc9918a945e13d5a2bda/pygments-2.18.0-py3-none-any.whl", hash = "sha256:b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a", size = 1205513 },
+]
+
+[[package]]
+name = "pymysql"
+version = "1.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/8f/ce59b5e5ed4ce8512f879ff1fa5ab699d211ae2495f1adaa5fbba2a1eada/pymysql-1.1.1.tar.gz", hash = "sha256:e127611aaf2b417403c60bf4dc570124aeb4a57f5f37b8e95ae399a42f904cd0", size = 47678 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/94/e4181a1f6286f545507528c78016e00065ea913276888db2262507693ce5/PyMySQL-1.1.1-py3-none-any.whl", hash = "sha256:4de15da4c61dc132f4fb9ab763063e693d521a80fd0e87943b9a453dd4c19d6c", size = 44972 },
 ]
 
 [[package]]

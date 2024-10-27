@@ -88,10 +88,12 @@ class PersonalityModelProb(mlflow.pyfunc.PythonModel):
         shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
         train_table_path = f"{shema_path}.train_set"
 
+        drop_columns_train = ["id", "update_timestamp_utc", self.config.target]
+
         logger.info(f"Load train data from {train_table_path}")
         train_set_spark = spark.table(train_table_path)
 
-        X_train = train_set_spark.drop(self.config.target, "id").toPandas()
+        X_train = train_set_spark.drop(*drop_columns_train).toPandas()
 
         model_name = f"{shema_path}.personality_model_prob"
 

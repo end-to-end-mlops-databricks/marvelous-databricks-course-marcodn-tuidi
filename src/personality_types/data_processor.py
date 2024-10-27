@@ -183,7 +183,8 @@ class DataProcessor:
                 ("gender", gender_transformer, "gender"),
                 ("education", education_transform, "education"),
                 ("cat", categorical_transformer, standard_categorical),
-            ]
+            ],
+            remainder="passthrough",
         )
 
     def split_data(
