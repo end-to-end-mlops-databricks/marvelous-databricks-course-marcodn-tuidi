@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.figure import Figure
+from mlflow.entities.model_registry import ModelVersion
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
@@ -27,7 +28,7 @@ class PersonalityModel:
 
     Attributes:
         config (ProjectConfig): A configuration object containing model's
-            hyperparameters
+            hyperparameters.
         model (Pipeline): Pipeline containing a preprocessing step and a
         random forest classifier.
     """
@@ -43,7 +44,7 @@ class PersonalityModel:
             preprocessor (ColumnTransformer): Preprocessing steps to transform
                 input features before training.
             config (ProjectConfig): A configuration object containing model's
-                hyperparameters
+                hyperparameters.
         """
         self.config = config
         base_model = RandomForestClassifier(
@@ -105,7 +106,7 @@ class PersonalityModel:
         spark: SparkSession,
         experiment_name: str,
         run_tags: Dict[str, Any],
-    ) -> int:
+    ) -> ModelVersion:
         shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
         train_table_path = f"{shema_path}.train_set"
         test_table_path = f"{shema_path}.test_set"
