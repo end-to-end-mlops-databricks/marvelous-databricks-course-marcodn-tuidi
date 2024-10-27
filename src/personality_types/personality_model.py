@@ -1,8 +1,11 @@
 from typing import Any, Dict, Tuple
 
+import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from matplotlib.figure import Figure
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
@@ -81,6 +84,22 @@ class PersonalityModel:
         accuracy = accuracy_score(y_test, y_pred, normalize=True)
         return accuracy
 
+    def get_feature_importance_plot(self) -> Figure:
+        preprocessor = self.model.named_steps["preprocessor"]
+        model = self.model.named_steps["classifier"]
+        importances = model.feature_importances_
+        features = preprocessor.get_feature_names_out()
+        feature_importance_df = pd.DataFrame(
+            {"Feature": features, "Importance": importances}
+        )
+        feature_importance_df = feature_importance_df.sort_values(
+            by="Importance", ascending=False
+        )
+        fig = plt.figure(figsize=(10, 6))
+        sns.barplot(x="Importance", y="Feature", data=feature_importance_df)
+        plt.title("Feature Importances from Random Forest Classifier")
+        return fig
+
     def train_and_log(
         self,
         spark: SparkSession,
@@ -131,6 +150,11 @@ class PersonalityModel:
             mlflow.log_params(self.config.parameters)
 
             mlflow.log_metric("accuracy", accuracy)
+
+            feature_importance_plot = self.get_feature_importance_plot()
+            mlflow.log_figure(
+                feature_importance_plot, "plots/feature_importance.png"
+            )
 
             signature = infer_signature(
                 model_input=X_train, model_output=y_pred

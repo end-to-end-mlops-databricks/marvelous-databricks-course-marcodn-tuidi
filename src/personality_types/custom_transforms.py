@@ -57,6 +57,21 @@ class ForcedValuesTransform(BaseEstimator, TransformerMixin):
         X = np.where(np.isin(X, self.allowed_values), X, self.inpute_value)
         return X.reshape(-1, 1)
 
+    def get_feature_names_out(self, input_features=None) -> list:
+        """
+        Returns feature names for output, consistent with the input features.
+
+        Args:
+            input_features (list, optional): Input feature names.
+
+        Returns:
+            list: List of feature names, either provided or inferred from X.
+        """
+        # If input_features is provided, return it; otherwise, infer from X
+        if input_features is not None:
+            return input_features
+        return list(self.allowed_values)
+
 
 class GenderTransform(ForcedValuesTransform):
     """
