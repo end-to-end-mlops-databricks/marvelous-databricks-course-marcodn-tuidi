@@ -83,6 +83,24 @@ class PersonalityModelProb(mlflow.pyfunc.PythonModel):
         run_tags: Dict[str, Any],
         model_version_alias: str,
     ) -> ModelVersion:
+        """
+        Logs the personality prediction model to MLflow, including metadata,
+        artifacts, and environment configuration, and registers it in the
+        MLflow Model Registry.
+
+        Args:
+            spark (SparkSession): The active Spark session for loading data.
+            experiment_name (str): The MLflow experiment name for logging
+                model information.
+            run_tags (Dict[str, Any]): Tags for the MLflow run, adding metadata
+                to the logged model.
+            model_version_alias (str): Alias for the registered model version,
+                allowing easier access to the model in production.
+
+        Returns:
+            ModelVersion: The registered model version in the MLflow Model
+            Registry with the specified alias.
+        """
         client = MlflowClient()
 
         shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"

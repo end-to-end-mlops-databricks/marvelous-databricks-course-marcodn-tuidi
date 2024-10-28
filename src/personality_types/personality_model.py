@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import matplotlib.pyplot as plt
 import mlflow
@@ -82,11 +82,29 @@ class PersonalityModel:
         """
         return self.model.predict(X)
 
-    def evaluate(self, y_test: pd.Series, y_pred: pd.Series) -> Tuple[float]:
+    def evaluate(self, y_test: pd.Series, y_pred: pd.Series) -> float:
+        """
+        Evaluates the model's accuracy based on provided test labels and
+        predictions.
+
+        Args:
+            y_test (pd.Series): True labels for the test data.
+            y_pred (pd.Series): Predicted labels from the model.
+
+        Returns:
+            float: The accuracy score of the model.
+        """
         accuracy = accuracy_score(y_test, y_pred, normalize=True)
         return accuracy
 
     def get_feature_importance_plot(self) -> Figure:
+        """
+        Generates a bar plot of feature importances from the Random Forest
+        model.
+
+        Returns:
+            Figure: A matplotlib figure containing the feature importance plot.
+        """
         preprocessor = self.model.named_steps["preprocessor"]
         model = self.model.named_steps["classifier"]
         importances = model.feature_importances_
@@ -108,6 +126,18 @@ class PersonalityModel:
         experiment_name: str,
         run_tags: Dict[str, Any],
     ) -> ModelVersion:
+        """
+        Trains the model, evaluates it, and logs parameters, metrics, and
+        artifacts to MLflow, including model registry.
+
+        Args:
+            spark (SparkSession): The active Spark session for loading data.
+            experiment_name (str): The name of the MLflow experiment.
+            run_tags (Dict[str, Any]): Metadata tags for the MLflow run.
+
+        Returns:
+            ModelVersion: The versioned model registered in MLflow.
+        """
         shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
         train_table_path = f"{shema_path}.train_set"
         test_table_path = f"{shema_path}.test_set"
@@ -194,6 +224,22 @@ class PersonalityModel:
         run_tags: Dict[str, Any],
         training_set: Any,
     ) -> ModelVersion:
+        """
+        Trains the model using data from the Feature Engineering client,
+        evaluates, and logs artifacts and metrics to MLflow.
+
+        Args:
+            spark (SparkSession): The active Spark session for loading data.
+            fe (FeatureEngineeringClient): Client for feature engineering and
+                feature store access.
+            experiment_name (str): The name of the MLflow experiment.
+            run_tags (Dict[str, Any]): Metadata tags for the MLflow run.
+            training_set (Any): Dataset provided by FeatureEngineeringClient
+                for training.
+
+        Returns:
+            ModelVersion: The versioned model registered in MLflow.
+        """
         training_df = training_set.load_df().toPandas()
         shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
         test_table_path = f"{shema_path}.test_set"

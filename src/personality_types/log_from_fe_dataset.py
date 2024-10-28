@@ -22,6 +22,29 @@ def fe_logger(
     run_tags: Dict[str, Any],
     training_set: Any,
 ) -> ModelVersion:
+    """
+    Trains a personality classification model using a feature engineering
+    client for data loading, evaluates it, and logs parameters, metrics, and
+    artifacts to MLflow, registering the model in the MLflow Model Registry.
+
+    Args:
+        spark (SparkSession): The active Spark session for data loading.
+        config (ProjectConfig): Configuration object containing model
+            hyperparameters and settings.
+        fe (FeatureEngineeringClient): Feature engineering client to access
+            the training set and log the model.
+        preprocessor (ColumnTransformer): Preprocessing steps to transform
+            input features before training.
+        experiment_name (str): The name of the MLflow experiment for logging.
+        run_tags (Dict[str, Any]): Metadata tags to associate with the
+            MLflow run.
+        training_set (Any): Training set loaded through the feature engineering
+            client for model training.
+
+    Returns:
+        ModelVersion: The versioned model registered in the MLflow Model
+            Registry.
+    """
     training_df = training_set.load_df().toPandas()
     shema_path = f"{config.catalog_name}.{config.schema_name}"
     test_table_path = f"{shema_path}.test_set"
