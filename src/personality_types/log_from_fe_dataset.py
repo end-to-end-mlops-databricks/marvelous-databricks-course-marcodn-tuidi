@@ -24,12 +24,9 @@ def fe_logger(
 ) -> ModelVersion:
     training_df = training_set.load_df().toPandas()
     shema_path = f"{config.catalog_name}.{config.schema_name}"
-    train_table_path = f"{shema_path}.train_set"
     test_table_path = f"{shema_path}.test_set"
 
     drop_columns_train = ["id", "update_timestamp_utc", config.target]
-
-    logger.info(f"Load train data from {train_table_path}")
 
     logger.info(f"Load test data from {test_table_path}")
     test_set_spark = spark.table(test_table_path)

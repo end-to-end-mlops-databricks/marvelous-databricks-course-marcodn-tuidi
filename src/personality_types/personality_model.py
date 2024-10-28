@@ -5,6 +5,7 @@ import mlflow
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from databricks.feature_engineering import FeatureEngineeringClient
 from matplotlib.figure import Figure
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models import infer_signature
@@ -180,6 +181,86 @@ class PersonalityModel:
         model_version = mlflow.register_model(
             model_uri=f"runs:/{run_id}/randomforest-pipeline-model",
             name=f"{shema_path}.personality_model_basic",
+            tags=run_tags,
+        )
+
+        return model_version
+
+    def train_and_log_from_fe(
+        self,
+        spark: SparkSession,
+        fe: FeatureEngineeringClient,
+        experiment_name: str,
+        run_tags: Dict[str, Any],
+        training_set: Any,
+    ) -> ModelVersion:
+        training_df = training_set.load_df().toPandas()
+        shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        test_table_path = f"{shema_path}.test_set"
+
+        drop_columns_train = ["id", "update_timestamp_utc", self.config.target]
+
+        logger.info(f"Load test data from {test_table_path}")
+        test_set_spark = spark.table(test_table_path)
+
+        X_train = training_df.drop(["id", self.config.target], axis=1)
+        X_test = test_set_spark.drop(*drop_columns_train).toPandas()
+        X_test["score_avg"] = X_test[["thinking_score", "sensing_score"]].mean(
+            axis=1
+        )
+
+        y_train = training_df[self.config.target]
+        y_test = test_set_spark.select(self.config.target).toPandas()
+
+        logger.info("Configuring mlflow to log on databricks")
+        mlflow.set_tracking_uri("databricks")
+        mlflow.set_registry_uri("databricks-uc")
+
+        logger.info(f"Setting experiment: {experiment_name}")
+        mlflow.set_experiment(experiment_name=experiment_name)
+
+        logger.info("Start run")
+        with mlflow.start_run(tags=run_tags) as run:
+            run_id = run.info.run_id
+            logger.info(f"Start run (id: {run_id})")
+
+            logger.info("Training the model...")
+            self.train(X_train, y_train)
+
+            logger.info("Get predictions")
+            y_pred = self.predict(X_test)
+
+            accuracy = self.evaluate(y_test, y_pred)
+            logger.info(f"Accuracy: {accuracy}")
+
+            mlflow.log_param(
+                "model_type", "Random forest classifier with preprocessing"
+            )
+
+            mlflow.log_params(self.config.parameters)
+
+            mlflow.log_metric("accuracy", accuracy)
+
+            feature_importance_plot = self.get_feature_importance_plot()
+            mlflow.log_figure(
+                feature_importance_plot, "plots/feature_importance.png"
+            )
+
+            signature = infer_signature(
+                model_input=X_train, model_output=y_pred
+            )
+
+            fe.log_model(
+                model=self.model,
+                flavor=mlflow.sklearn,
+                artifact_path="randomforest-pipeline-model-fe",
+                training_set=training_set,
+                signature=signature,
+            )
+
+        model_version = mlflow.register_model(
+            model_uri=f"runs:/{run_id}/randomforest-pipeline-model-fe",
+            name=f"{shema_path}.personality_model_fe",
             tags=run_tags,
         )
 

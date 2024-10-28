@@ -3,7 +3,7 @@ from databricks.feature_engineering import FeatureEngineeringClient
 from src.personality_types.config import ProjectConfig
 from src.personality_types.data_processor import DataProcessor
 from src.personality_types.fe_setup import TrainingSetBuilder
-from src.personality_types.log_from_fe_dataset import fe_logger
+from src.personality_types.personality_model import PersonalityModel
 from src.utils.logger_utils import set_logger
 
 spark = DatabricksSession.builder.getOrCreate()
@@ -37,11 +37,11 @@ fe_builder = TrainingSetBuilder(spark, config)
 
 training_set = fe_builder.create_training_set(fe)
 
-model_version = fe_logger(
+personality_model = PersonalityModel(preprocessor, config)
+
+model_version = personality_model.train_and_log_from_fe(
     spark,
-    config,
     fe,
-    preprocessor,
     "/Users/marco.dinardo@tuidi.it/personality-types-fe",
     run_tags,
     training_set,
