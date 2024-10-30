@@ -22,7 +22,7 @@ def test_gender_transfrom(test_data: pytest.FixtureRequest) -> None:
     """
     expected_result = ["Male", "Unknown", "Male", "Female", "Male", "Female"]
     transformer = GenderTransform()
-    result = transformer.fit_transform(test_data["Gender"]).reshape(-1)
+    result = transformer.fit_transform(test_data["gender"]).reshape(-1)
     assert result.__eq__(expected_result).all()
 
 
@@ -43,5 +43,5 @@ def test_education_transfrom(test_data: pytest.FixtureRequest) -> None:
     """
     expected_result = [0, 0, 1, 1, 0, 1]
     transformer = EducationTransform()
-    result = transformer.fit_transform(test_data["Education"]).reshape(-1)
+    result = transformer.fit_transform(test_data["education"]).reshape(-1)
     assert result.__eq__(expected_result).all()

@@ -39,8 +39,8 @@ def test_create_target(data_processor_train: pytest.FixtureRequest) -> None:
         None,
         None,
     ]
-    target = data_processor_train.config["target"]
-    raw_target = data_processor_train.config["raw_target"]
+    target = data_processor_train.config.target
+    raw_target = data_processor_train.config.raw_target
     data_processor_train.create_target(target, raw_target)
     assert list(data_processor_train.df[target]).__eq__(expected_target)
 
@@ -82,7 +82,7 @@ def test_preprocessor_data(
         - Column names of the feature matrix match the expected feature list.
     """
     data_processor_train.preprocess_data()
-    expected_features = ["Age", "Score", "Gender", "Education", "Interest"]
+    expected_features = ["age", "score", "gender", "education", "interest"]
     assert data_processor_train.preprocessor is not None
     assert data_processor_train.X.shape == (4, 5)
     assert data_processor_train.y.shape == (4,)
@@ -123,10 +123,10 @@ def test_preprocessor_transform_numeric(
         - Median value is correctly calculated.
         - Manually scaled value matches the expected standardized value.
     """
-    median_score_value = data_processor_train.X["Score"].median()
-    test_data.fillna({"Score": median_score_value}, inplace=True)
-    scaler_mean = data_processor_train.X["Score"].mean()
-    scaler_std_dev = data_processor_train.X["Score"].std()
+    median_score_value = data_processor_train.X["score"].median()
+    test_data.fillna({"score": median_score_value}, inplace=True)
+    scaler_mean = data_processor_train.X["score"].mean()
+    scaler_std_dev = data_processor_train.X["score"].std()
     expected_score = (median_score_value - scaler_mean) / scaler_std_dev
 
     assert median_score_value == 5

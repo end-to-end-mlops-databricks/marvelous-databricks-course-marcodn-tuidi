@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from src.personality_types.config import ProjectConfig
 from src.personality_types.data_processor import DataProcessor
 
 
@@ -18,11 +19,11 @@ def test_data() -> pd.DataFrame:
     """
     test_data_df = pd.DataFrame(
         data={
-            "Age": [10, 4, 34, 25, 56, 21],
-            "Score": [np.nan, 5, 5, 8, 9, 8],
-            "Education": [np.nan, 4, 1, 1, 0, 1],
-            "Gender": ["Male", None, "Male", "Female", "Male", "Female"],
-            "Interest": ["Sport", "Art", "Unknown", "Sport", None, None],
+            "age": [10, 4, 34, 25, 56, 21],
+            "score": [np.nan, 5, 5, 8, 9, 8],
+            "education": [np.nan, 4, 1, 1, 0, 1],
+            "gender": ["Male", None, "Male", "Female", "Male", "Female"],
+            "interest": ["Sport", "Art", "Unknown", "Sport", None, None],
             "raw_target": ["INTJ", "INFJ", "ISTJ", "ISTP", "INVALID", None],
         }
     )
@@ -30,28 +31,31 @@ def test_data() -> pd.DataFrame:
 
 
 @pytest.fixture
-def test_config() -> dict:
+def test_config() -> ProjectConfig:
     """
-    Fixture to provide a sample configuration dictionary for data processing.
+    Fixture to provide a sample configuration for data processing.
 
     Returns:
-        dict: Configuration dictionary containing numeric, categorical features
-            and target information.
+        ProjectConfig: Configuration dictionary containing numeric, categorical
+        features and target information.
     """
     test_config_dict = {
-        "num_features": ["Age", "Score"],
-        "cat_features": ["Gender", "Education", "Interest"],
+        "num_features": ["age", "score"],
+        "cat_features": ["gender", "education", "interest"],
         "raw_target": "raw_target",
         "target": "target",
+        "catalog_name": "catalog_test",
+        "schema_name": "schema_test",
+        "parameters": {"learning_rate": 1},
     }
-    return test_config_dict
+    return ProjectConfig.from_dict(test_config_dict)
 
 
 @pytest.fixture
 def data_processor_train(
     tmp_path: pytest.TempPathFactory,
     test_data: pd.DataFrame,
-    test_config: dict,
+    test_config: ProjectConfig,
 ) -> DataProcessor:
     """
     Fixture to create and return a DataProcessor object for training data.
@@ -59,7 +63,7 @@ def data_processor_train(
     Args:
         tmp_path (pytest.TempPathFactory): Temporary directory path.
         test_data (pd.DataFrame): Test data to be processed.
-        test_config (dict): Configuration for data processing.
+        test_config (ProjectConfig): Configuration for data processing.
 
     Returns:
         DataProcessor: Instance of DataProcessor initialized with test data
@@ -101,11 +105,11 @@ def test_data_split() -> pd.DataFrame:
     """
     test_data_df = pd.DataFrame(
         data={
-            "Age": [10, 4, 34, 25] * 4,
-            "Score": [np.nan, 5, 5, 8] * 4,
-            "Education": [np.nan, 4, 1, 1] * 4,
-            "Gender": ["Male", None, "Male", "Female"] * 4,
-            "Interest": ["Sport", "Art", "Unknown", "Sport"] * 4,
+            "age": [10, 4, 34, 25] * 4,
+            "score": [np.nan, 5, 5, 8] * 4,
+            "education": [np.nan, 4, 1, 1] * 4,
+            "gender": ["Male", None, "Male", "Female"] * 4,
+            "interest": ["Sport", "Art", "Unknown", "Sport"] * 4,
             "raw_target": ["INTJ", "INFJ", "ISTJ", "ISTP"] * 4,
         }
     )
@@ -116,7 +120,7 @@ def test_data_split() -> pd.DataFrame:
 def data_processor_train_split(
     tmp_path: pytest.TempPathFactory,
     test_data_split: pd.DataFrame,
-    test_config: dict,
+    test_config: ProjectConfig,
 ) -> DataProcessor:
     """
     Fixture to create and return a DataProcessor object for split test data.
@@ -124,7 +128,7 @@ def data_processor_train_split(
     Args:
         tmp_path (pytest.TempPathFactory): Temporary directory path.
         test_data_split (pd.DataFrame): Split test data to be processed.
-        test_config (dict): Configuration for data processing.
+        test_config (ProjectConfig): Configuration for data processing.
 
     Returns:
         DataProcessor: Instance of DataProcessor initialized with split test

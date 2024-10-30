@@ -1,12 +1,15 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import pyspark.sql.functions as F
+from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from src.personality_types.config import ProjectConfig
 from src.personality_types.custom_transforms import (
     EducationTransform,
     GenderTransform,
@@ -22,8 +25,8 @@ class DataProcessor:
         df (pd.DataFrame): Loaded dataset as a pandas DataFrame.
         train (bool): A flag indicating whether the data is for training
             (True) or inference (False).
-        config (dict): A configuration dictionary containing feature names and
-            other processing parameters.
+        config (ProjectConfig): A configuration object containing feature
+            names and other processing parameters.
         X (Optional[pd.DataFrame]): The feature matrix.
         y (Optional[pd.Series]): The target vector.
         preprocessor (Optional[ColumnTransformer]): The preprocessor used for
@@ -31,7 +34,7 @@ class DataProcessor:
     """
 
     def __init__(
-        self, data_path: str, train: bool, config: Dict[str, Any]
+        self, data_path: str, train: bool, config: ProjectConfig
     ) -> None:
         """
         Initializes the DataProcessor with the data path, training flag,
@@ -44,7 +47,7 @@ class DataProcessor:
             config (dict): Configuration dictionary containing feature names
                 and target variable details.
         """
-        self.df = self.load_data(data_path)
+        self.df = self.rename_columns(self.load_data(data_path))
         self.train = train
         self.config = config
         self.X = None
@@ -62,6 +65,21 @@ class DataProcessor:
             pd.DataFrame: Loaded dataset.
         """
         return pd.read_csv(data_path)
+
+    @staticmethod
+    def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Renames columns of a pandas dataframe so that columns names are
+        lowercase and follow snake case convention.
+
+        Args:
+            df (pd.DataFrame): Input dataframe.
+
+        Returns:
+            pd.DataFrame: DataFrame with renamed columns.
+        """
+        df.columns = df.columns.str.lower().str.replace(" ", "_")
+        return df
 
     def create_target(self, target: str, raw_target: str) -> None:
         """
@@ -93,6 +111,13 @@ class DataProcessor:
             ),
         )
 
+    def add_id_column(self):
+        """
+        Add string id columns to dataframe.
+        """
+        self.X["id"] = np.arange(len(self.X))
+        self.X["id"] = self.X["id"].astype(str)
+
     def preprocess_data(self) -> None:
         """
         Preprocesses the dataset by handling missing values, scaling numeric
@@ -100,14 +125,14 @@ class DataProcessor:
         The preprocessor is built and stored as an attribute, and `X` and `y`
         are set up based on the feature matrix and target.
         """
-        num_features = self.config["num_features"]
-        cat_features = self.config["cat_features"]
+        num_features = self.config.num_features
+        cat_features = self.config.cat_features
         train_features = num_features + cat_features
 
         # remove columns with missing raw target
         if self.train:
-            raw_target = self.config["raw_target"]
-            target = self.config["target"]
+            raw_target = self.config.raw_target
+            target = self.config.target
 
             self.create_target(target, raw_target)
             self.df = self.df.dropna(subset=[target])
@@ -127,7 +152,7 @@ class DataProcessor:
 
         # categorical features
         standard_categorical = list(
-            set(self.config["cat_features"]) - set(["Gender", "Education"])
+            set(self.config.cat_features) - set(["gender", "education"])
         )
 
         categorical_transformer = Pipeline(
@@ -154,11 +179,12 @@ class DataProcessor:
         # Combine preprocessing steps
         self.preprocessor = ColumnTransformer(
             transformers=[
-                ("num", numeric_transformer, self.config["num_features"]),
-                ("gender", gender_transformer, "Gender"),
-                ("education", education_transform, "Education"),
+                ("num", numeric_transformer, num_features),
+                ("gender", gender_transformer, "gender"),
+                ("education", education_transform, "education"),
                 ("cat", categorical_transformer, standard_categorical),
-            ]
+            ],
+            remainder="passthrough",
         )
 
     def split_data(
@@ -185,4 +211,63 @@ class DataProcessor:
             test_size=test_size,
             random_state=random_state,
             stratify=self.y,
+        )
+
+    def save_to_catalog(
+        self,
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+        y_train: pd.Series,
+        y_test: pd.Series,
+        spark: SparkSession,
+    ) -> None:
+        """
+        Save the train and test sets into unity catalog. Adds update timestamp
+        to simulate delta changes.
+
+        Args:
+            X_train (pd.DataFrame): Training set to be saved.
+            X_test (pd.DataFrame): Test set to be saved.
+            y_train (pd.Series): Train target to be saved inside train set.
+            y_test (pd.Series): Test target to be saved inside test set.
+            spark (SparkSession): current spark session.
+        """
+
+        train_set = pd.concat([X_train, y_train], axis=1)
+        test_set = pd.concat([X_test, y_test], axis=1)
+
+        train_set_with_timestamp = spark.createDataFrame(train_set).withColumn(
+            "update_timestamp_utc",
+            F.to_utc_timestamp(F.current_timestamp(), "UTC"),
+        )
+
+        test_set_with_timestamp = spark.createDataFrame(test_set).withColumn(
+            "update_timestamp_utc",
+            F.to_utc_timestamp(F.current_timestamp(), "UTC"),
+        )
+
+        shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        train_table_path = f"{shema_path}.train_set"
+        test_table_path = f"{shema_path}.test_set"
+
+        train_set_with_timestamp.write.mode("append").saveAsTable(
+            train_table_path
+        )
+
+        test_set_with_timestamp.write.mode("append").saveAsTable(
+            test_table_path
+        )
+
+        spark.sql(
+            f"""
+            ALTER TABLE {train_table_path}
+            SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')
+            """
+        )
+
+        spark.sql(
+            f"""
+            ALTER TABLE {test_table_path}
+            SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')
+            """
         )
