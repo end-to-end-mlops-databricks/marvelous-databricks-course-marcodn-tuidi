@@ -1,10 +1,10 @@
 import mlflow
-from databricks.connect import DatabricksSession
+from pyspark.sql import SparkSession
 from src.personality_types.config import ProjectConfig
 from src.personality_types.personality_model_prob import PersonalityModelProb
 from src.utils.logger_utils import set_logger
 
-spark = DatabricksSession.builder.getOrCreate()
+spark = SparkSession.builder.getOrCreate()
 
 logger = set_logger()
 
