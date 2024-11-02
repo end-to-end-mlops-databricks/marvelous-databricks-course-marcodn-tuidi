@@ -52,7 +52,7 @@ class DataProcessor:
             config (dict): Configuration dictionary containing feature names
                 and target variable details.
         """
-        self.df = self.rename_columns(spark, self.load_data(data_path))
+        self.df = self.rename_columns(self.load_data(spark, data_path))
         self.train = train
         self.config = config
         self.X = None
