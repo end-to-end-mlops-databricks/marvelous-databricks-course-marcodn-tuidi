@@ -5,7 +5,19 @@ import mlflow
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from databricks.feature_engineering import FeatureEngineeringClient
+from databricks.feature_engineering import (
+    FeatureEngineeringClient,
+    FeatureLookup,
+)
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.catalog import (
+    OnlineTableSpec,
+    OnlineTableSpecTriggeredSchedulingPolicy,
+)
+from databricks.sdk.service.serving import (
+    EndpointCoreConfigInput,
+    ServedEntityInput,
+)
 from matplotlib.figure import Figure
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models import infer_signature
@@ -463,3 +475,88 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         df_prediction_spark = spark.createDataFrame(df_prediction)
 
         return df_prediction_spark
+
+    def create_bach_feature_serving(
+        self,
+        spark: SparkSession,
+        workspace: WorkspaceClient,
+        fe: FeatureEngineeringClient,
+        df_prediction: DataFrame,
+        feature_table_name: str,
+        online_table_name: str,
+        feature_spec_name: str,
+        endpoint_name: str,
+    ):
+        """
+        Method that creates a serving point fot accessing predictions.
+
+        Args:
+            spark (SparkSession): The active Spark session for loading data.
+            workspace (WorkspaceClient): Databricks workspace client.
+            fe (FeatureEngineeringClient): Client for feature engineering and
+                feature store access.
+            df_prediction (DataFrame): Spark dataframe with the predictions.
+            feature_table_name (str): Name of the feature table.
+            online_table_name (str): Name of the online table spec.
+            feature_spec_name (str): Name of the feature spec.
+            endpoint_name (str): Name of the serving endpoint.
+        """
+        schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        feature_table_path = f"{schema_path}.{feature_table_name}"
+        online_table_path = f"{schema_path}.{online_table_name}"
+        feature_spec_path = f"{schema_path}.{feature_spec_name}"
+
+        # Create feature table containing the predictions
+        fe.create_table(
+            name=feature_table_path,
+            primary_keys=["Id"],
+            df=df_prediction,
+            description="Personality types predictions feature table",
+        )
+        spark.sql(
+            f"""
+            ALTER TABLE {feature_table_path}
+            SET TBLPROPERTIES (delta.enableChangeDataFeed = true)
+            """
+        )
+
+        # Create the online table for fast retrival
+        trigger = OnlineTableSpecTriggeredSchedulingPolicy.from_dict(
+            {"triggered": "true"}
+        )
+        spec = OnlineTableSpec(
+            primary_key_columns=["Id"],
+            source_table_full_name=feature_table_path,
+            run_triggered=trigger,
+            perform_full_copy=False,
+        )
+        workspace.online_tables.create(name=online_table_path, spec=spec)
+
+        # Create feature lookup
+        features = [
+            FeatureLookup(
+                table_name=feature_table_path,
+                lookup_key="Id",
+                feature_names=["gender", "age", "predicted_class"],
+            )
+        ]
+
+        # Create feature spec table for serving
+        fe.create_feature_spec(
+            name=feature_spec_path, features=features, exclude_columns=None
+        )
+
+        # Create serving endpoint
+        workspace.serving_endpoints.create(
+            name=endpoint_name,
+            config=EndpointCoreConfigInput(
+                served_entities=[
+                    ServedEntityInput(
+                        entity_name=feature_spec_path,
+                        scale_to_zero_enabled=True,
+                        workload_size="Small",
+                    )
+                ]
+            ),
+        )
+        logger.info("Serving endpoint created.")
