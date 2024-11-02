@@ -34,20 +34,25 @@ class DataProcessor:
     """
 
     def __init__(
-        self, data_path: str, train: bool, config: ProjectConfig
+        self,
+        spark: SparkSession,
+        data_path: str,
+        train: bool,
+        config: ProjectConfig,
     ) -> None:
         """
         Initializes the DataProcessor with the data path, training flag,
         and configuration.
 
         Args:
+            spark (SparkSession): current spark session.
             data_path (str): Path to the CSV file containing the dataset.
             train (bool): A flag indicating whether it's training mode (True)
                 or inference mode (False).
             config (dict): Configuration dictionary containing feature names
                 and target variable details.
         """
-        self.df = self.rename_columns(self.load_data(data_path))
+        self.df = self.rename_columns(spark, self.load_data(data_path))
         self.train = train
         self.config = config
         self.X = None
