@@ -10,7 +10,7 @@ from matplotlib.figure import Figure
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models import infer_signature
 from mlflow.utils.environment import _mlflow_conda_env
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
@@ -439,3 +439,34 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         )
 
         return model_version
+
+    def batch_predictions(
+        self,
+        spark: SparkSession,
+        model_name: str,
+        model_version: int,
+        df: pd.DataFrame,
+    ) -> DataFrame:
+        """
+        Creates a feature table containing the pre-computed predictions.
+
+        Args:
+            spark (SparkSession): The active Spark session for loading data.
+            model_name (str): Saved model name to load.
+            model_version (int): Version of the model to load.
+            df (pd.DataFrame): Dataframe to use for prediction.
+
+        Returns:
+            DataFrame: Spark DataFrame with the predictions.
+        """
+
+        schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        model_path = f"models:/{schema_path}.{model_name}/{model_version}"
+        self.model = mlflow.pyfunc.load_model(model_path).unwrap_python_model()
+
+        df_prediction = df[["id", "gender", "age"]]
+        df_prediction["predicted_class"] = self.predict(df)
+
+        df_prediction_spark = spark.createDataFrame(df_prediction)
+
+        return df_prediction_spark
