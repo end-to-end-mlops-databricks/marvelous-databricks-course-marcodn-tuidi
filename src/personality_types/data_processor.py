@@ -54,17 +54,18 @@ class DataProcessor:
         self.y = None
         self.preprocessor = None
 
-    def load_data(self, data_path: str) -> pd.DataFrame:
+    def load_data(self, spark: SparkSession, data_path: str) -> pd.DataFrame:
         """
         Loads the dataset from the specified CSV file path.
 
         Args:
+            spark (SparkSession): current spark session.
             data_path (str): Path to the CSV file.
 
         Returns:
             pd.DataFrame: Loaded dataset.
         """
-        return pd.read_csv(data_path)
+        return spark.read.csv(data_path, header=True).toPandas()
 
     @staticmethod
     def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
