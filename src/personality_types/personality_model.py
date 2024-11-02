@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import matplotlib.pyplot as plt
 import mlflow
@@ -37,7 +37,10 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
     """
 
     def __init__(
-        self, preprocessor: ColumnTransformer, config: ProjectConfig
+        self,
+        preprocessor: ColumnTransformer,
+        config: ProjectConfig,
+        model_path: Optional[str] = None,
     ) -> None:
         """
         Initializes the PersonalityModel with a specified preprocessor and
@@ -48,6 +51,8 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
                 input features before training.
             config (ProjectConfig): A configuration object containing model's
                 hyperparameters.
+            model_path (Optional, str): Path of the model to load. If not None
+                the model will be loaded and not created.
         """
         self.config = config
         base_model = RandomForestClassifier(
@@ -55,9 +60,16 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             max_depth=config.parameters["max_depth"],
             random_state=42,
         )
-        self.model = Pipeline(
-            steps=[("preprocessor", preprocessor), ("classifier", base_model)]
-        )
+        if model_path is not None:
+            model = mlflow.pyfunc.load_model(model_path)
+            self.model = model.unwrap_python_model()
+        else:
+            self.model = Pipeline(
+                steps=[
+                    ("preprocessor", preprocessor),
+                    ("classifier", base_model),
+                ]
+            )
 
     def train(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
         """
@@ -431,8 +443,6 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
     def batch_predictions(
         self,
         spark: SparkSession,
-        model_name: str,
-        model_version: int,
         df: pd.DataFrame,
     ) -> DataFrame:
         """
@@ -440,19 +450,14 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
 
         Args:
             spark (SparkSession): The active Spark session for loading data.
-            model_name (str): Saved model name to load.
-            model_version (int): Version of the model to load.
             df (pd.DataFrame): Dataframe to use for prediction.
 
         Returns:
             DataFrame: Spark DataFrame with the predictions.
         """
-
-        schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
-        model_path = f"models:/{schema_path}.{model_name}/{model_version}"
-        self.model = mlflow.pyfunc.load_model(model_path).unwrap_python_model()
-
+        drop_columns = ["id", "update_timestamp_utc", self.config.target]
         df_prediction = df[["id", "gender", "age"]]
+        df = df.drop(drop_columns, axis=1)
         df_prediction["predicted_class"] = self.predict(df)
 
         df_prediction_spark = spark.createDataFrame(df_prediction)
