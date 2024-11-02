@@ -38,6 +38,7 @@ build-backend = "setuptools.build_meta"
 line-length = 79
 indent-width = 4
 src = ["src", "test"]
+exclude = ["notebooks"]
 
 show-fixes = true
 
@@ -52,6 +53,7 @@ exclude = [
   ".venv",
   ".vscode",
   "typings/__builtins__.pyi",
+  "notebooks",
 ]
 
 [tool.ruff.lint]
