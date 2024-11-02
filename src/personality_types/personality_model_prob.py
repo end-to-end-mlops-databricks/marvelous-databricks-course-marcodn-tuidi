@@ -10,9 +10,9 @@ from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import SparkSession
 from src.personality_types.config import ProjectConfig
 from src.personality_types.personality_model import PersonalityModel
-from src.utils.delta_utils import get_table_version
-from src.utils.logger_utils import set_logger
-from src.utils.predictions_utils import custom_predictions
+from src.personality_types.utils.delta_utils import get_table_version
+from src.personality_types.utils.logger_utils import set_logger
+from src.personality_types.utils.predictions_utils import custom_predictions
 
 logger = set_logger()
 

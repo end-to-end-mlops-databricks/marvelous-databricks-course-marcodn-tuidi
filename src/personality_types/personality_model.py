@@ -15,8 +15,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from src.personality_types.config import ProjectConfig
-from src.utils.delta_utils import get_table_version
-from src.utils.logger_utils import set_logger
+from src.personality_types.utils.delta_utils import get_table_version
+from src.personality_types.utils.logger_utils import set_logger
 
 logger = set_logger()
 

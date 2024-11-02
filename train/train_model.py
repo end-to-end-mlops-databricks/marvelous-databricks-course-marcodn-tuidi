@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 from src.personality_types.config import ProjectConfig
 from src.personality_types.data_processor import DataProcessor
 from src.personality_types.personality_model import PersonalityModel
-from src.utils.logger_utils import set_logger
+from src.personality_types.utils.logger_utils import set_logger
 
 spark = SparkSession.builder.getOrCreate()
 
