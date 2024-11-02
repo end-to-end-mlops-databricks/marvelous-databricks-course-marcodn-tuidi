@@ -17,7 +17,6 @@ logger = set_logger()
 config = ProjectConfig.from_yaml(config_path="./project_config.yml")
 logger.info("Configuration loaded.")
 
-
 preprocessor = ColumnTransformer(
     transformers=[
         ("cat", OneHotEncoder(handle_unknown="ignore"), config.cat_features)
