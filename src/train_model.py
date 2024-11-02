@@ -13,7 +13,7 @@ volume_path = "/Volumes/marvelous_dev_ops/personality_types/data/"
 file_name = "people_personality_types.csv"
 data_path = volume_path + file_name
 
-config = ProjectConfig.from_yaml(config_path="./project_config.yml")
+config = ProjectConfig.from_yaml(config_path="project_config.yml")
 logger.info("Configuration loaded.")
 
 # Initialize DataProcessor

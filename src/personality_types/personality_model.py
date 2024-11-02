@@ -84,6 +84,19 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         """
         return self.model.predict(X)
 
+    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+        """
+        Method that generates probability predictions using the trained model
+        on the provided data.
+
+        Args:
+            X (pd.DataFrame): Data to use for making the predictions.
+
+        Returns:
+            np.ndarray: Array of predicted classes.
+        """
+        return self.model.predict_proba(X)
+
     def evaluate(self, y_test: pd.Series, y_pred: pd.Series) -> float:
         """
         Evaluates the model's accuracy based on provided test labels and

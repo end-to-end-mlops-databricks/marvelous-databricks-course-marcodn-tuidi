@@ -116,10 +116,9 @@ class PersonalityModelProb(mlflow.pyfunc.PythonModel):
 
         model_name = f"{shema_path}.personality_model_prob"
 
-        whl_name = "personality_type-latest-py3-none-any.whl"
+        whl_name = "mlops_with_databricks-0.0.1-py3-none-any.whl"
         whl_path = f"code/{whl_name}"
-        vloume_path = "/Volumes/marvelous_dev_ops/personality_types/package/"
-        code_path = vloume_path + whl_name
+        code_path = "dist/" + whl_name
 
         example_input = X_train.iloc[0:1]
         example_prediction = self.predict(
@@ -127,8 +126,8 @@ class PersonalityModelProb(mlflow.pyfunc.PythonModel):
         )
 
         logger.info("Configuring mlflow to log on databricks")
-        mlflow.set_tracking_uri("databricks")
-        mlflow.set_registry_uri("databricks-uc")
+        mlflow.set_tracking_uri("databricks://adb-tuidiworkspace")
+        mlflow.set_registry_uri("databricks-uc://adb-tuidiworkspace")
 
         logger.info(f"Setting experiment: {experiment_name}")
         mlflow.set_experiment(experiment_name=experiment_name)

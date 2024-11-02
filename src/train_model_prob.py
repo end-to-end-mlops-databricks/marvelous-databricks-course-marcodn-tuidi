@@ -1,17 +1,18 @@
 import mlflow
 from pyspark.sql import SparkSession
-from src.personality_types.config import ProjectConfig
-from src.personality_types.personality_model_prob import PersonalityModelProb
-from src.personality_types.utils.logger_utils import set_logger
+
+from personality_types.config import ProjectConfig
+from personality_types.personality_model_prob import PersonalityModelProb
+from personality_types.utils.logger_utils import set_logger
 
 spark = SparkSession.builder.getOrCreate()
 
 logger = set_logger()
 
-config = ProjectConfig.from_yaml(config_path="../project_config.yml")
+config = ProjectConfig.from_yaml(config_path="project_config.yml")
 
-mlflow.set_tracking_uri("databricks")
-mlflow.set_registry_uri("databricks-uc")
+mlflow.set_tracking_uri("databricks://adb-tuidiworkspace")
+mlflow.set_registry_uri("databricks-uc://adb-tuidiworkspace")
 
 logger.info("Load pretrained model")
 run_id = mlflow.search_runs(
@@ -21,7 +22,7 @@ run_id = mlflow.search_runs(
 
 model_run = f"runs:/{run_id}/randomforest-pipeline-model"
 
-model = mlflow.sklearn.load_model(model_run)
+model = mlflow.pyfunc.load_model(model_run).unwrap_python_model()
 
 personality_model_prob = PersonalityModelProb(model, config)
 
