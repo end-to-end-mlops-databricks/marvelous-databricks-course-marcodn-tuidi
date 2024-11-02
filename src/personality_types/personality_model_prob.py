@@ -125,10 +125,6 @@ class PersonalityModelProb(mlflow.pyfunc.PythonModel):
             context=None, model_input=example_input
         )
 
-        logger.info("Configuring mlflow to log on databricks")
-        mlflow.set_tracking_uri("databricks://adb-tuidiworkspace")
-        mlflow.set_registry_uri("databricks-uc://adb-tuidiworkspace")
-
         logger.info(f"Setting experiment: {experiment_name}")
         mlflow.set_experiment(experiment_name=experiment_name)
 

@@ -7,6 +7,7 @@
 
 # COMMAND ----------
 
+import mlflow
 from databricks.feature_engineering import FeatureEngineeringClient
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
@@ -18,6 +19,8 @@ from personality_types.personality_model import PersonalityModel
 from personality_types.utils.logger_utils import set_logger
 
 # COMMAND ----------
+mlflow.set_tracking_uri("databricks")
+mlflow.set_registry_uri("databricks-uc")
 
 spark = SparkSession.builder.getOrCreate()
 fe = FeatureEngineeringClient()

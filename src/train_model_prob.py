@@ -5,6 +5,9 @@ from personality_types.config import ProjectConfig
 from personality_types.personality_model_prob import PersonalityModelProb
 from personality_types.utils.logger_utils import set_logger
 
+mlflow.set_tracking_uri("databricks://adb-tuidiworkspace")
+mlflow.set_registry_uri("databricks-uc://adb-tuidiworkspace")
+
 spark = SparkSession.builder.getOrCreate()
 
 logger = set_logger()
