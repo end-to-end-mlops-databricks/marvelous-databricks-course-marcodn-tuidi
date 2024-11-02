@@ -509,7 +509,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         # Create feature table containing the predictions
         fe.create_table(
             name=feature_table_path,
-            primary_keys=["Id"],
+            primary_keys=["id"],
             df=df_prediction,
             description="Personality types predictions feature table",
         )
@@ -525,7 +525,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             {"triggered": "true"}
         )
         spec = OnlineTableSpec(
-            primary_key_columns=["Id"],
+            primary_key_columns=["id"],
             source_table_full_name=feature_table_path,
             run_triggered=trigger,
             perform_full_copy=False,
@@ -536,7 +536,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         features = [
             FeatureLookup(
                 table_name=feature_table_path,
-                lookup_key="Id",
+                lookup_key="id",
                 feature_names=["gender", "age", "predicted_class"],
             )
         ]
