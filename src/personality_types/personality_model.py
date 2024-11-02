@@ -159,8 +159,8 @@ class PersonalityModel:
         y_test = test_set_spark.select(self.config.target).toPandas()
 
         logger.info("Configuring mlflow to log on databricks")
-        mlflow.set_tracking_uri("databricks")
-        mlflow.set_registry_uri("databricks-uc")
+        mlflow.set_tracking_uri("databricks://adb-tuidiworkspace")
+        mlflow.set_registry_uri("databricks-uc://adb-tuidiworkspace")
 
         logger.info(f"Setting experiment: {experiment_name}")
         mlflow.set_experiment(experiment_name=experiment_name)
