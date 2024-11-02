@@ -1,9 +1,10 @@
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
-from src.personality_types.config import ProjectConfig
-from src.personality_types.personality_model import PersonalityModel
-from src.personality_types.utils.logger_utils import set_logger
+
+from personality_types.config import ProjectConfig
+from personality_types.personality_model import PersonalityModel
+from personality_types.utils.logger_utils import set_logger
 
 spark = SparkSession.builder.getOrCreate()
 
