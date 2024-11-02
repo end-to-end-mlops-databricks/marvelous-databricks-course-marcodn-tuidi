@@ -9,8 +9,9 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from src.personality_types.config import ProjectConfig
-from src.personality_types.custom_transforms import (
+
+from personality_types.config import ProjectConfig
+from personality_types.custom_transforms import (
     EducationTransform,
     GenderTransform,
 )

@@ -9,19 +9,21 @@ from databricks.feature_engineering import FeatureEngineeringClient
 from matplotlib.figure import Figure
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models import infer_signature
+from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
-from src.personality_types.config import ProjectConfig
-from src.personality_types.utils.delta_utils import get_table_version
-from src.personality_types.utils.logger_utils import set_logger
+
+from personality_types.config import ProjectConfig
+from personality_types.utils.delta_utils import get_table_version
+from personality_types.utils.logger_utils import set_logger
 
 logger = set_logger()
 
 
-class PersonalityModel:
+class PersonalityModel(mlflow.pyfunc.PythonModel):
     """
     A class that constructs a machine learning pipeline to preprocess data,
     train a random forest classifier, and make predictions for personality
@@ -206,7 +208,118 @@ class PersonalityModel:
 
             mlflow.sklearn.log_model(
                 sk_model=self.model,
+                artifact_path="randomforest-pipeline-model-simple",
+                signature=signature,
+            )
+
+        model_version = mlflow.register_model(
+            model_uri=f"runs:/{run_id}/randomforest-pipeline-model-simple",
+            name=f"{shema_path}.{model_name}",
+            tags=run_tags,
+        )
+
+        return model_version
+
+    def train_and_log_custom(
+        self,
+        spark: SparkSession,
+        experiment_name: str,
+        run_tags: Dict[str, Any],
+        model_name: str,
+    ) -> ModelVersion:
+        """
+        Trains the model, evaluates it, and logs parameters, metrics, and
+        artifacts to MLflow, including model registry. Supports custom defined
+        model (example: custom preropcessing).
+
+        Args:
+            spark (SparkSession): The active Spark session for loading data.
+            experiment_name (str): The name of the MLflow experiment.
+            run_tags (Dict[str, Any]): Metadata tags for the MLflow run.
+            model_name (str): Name of the registered model.
+
+        Returns:
+            ModelVersion: The versioned model registered in MLflow.
+        """
+        shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        train_table_path = f"{shema_path}.train_set"
+        test_table_path = f"{shema_path}.test_set"
+
+        drop_columns_train = ["id", "update_timestamp_utc", self.config.target]
+
+        logger.info(f"Load train data from {train_table_path}")
+        train_set_spark = spark.table(train_table_path)
+
+        logger.info(f"Load test data from {test_table_path}")
+        test_set_spark = spark.table(test_table_path)
+
+        X_train = train_set_spark.drop(*drop_columns_train).toPandas()
+        X_test = test_set_spark.drop(*drop_columns_train).toPandas()
+
+        y_train = train_set_spark.select(self.config.target).toPandas()
+        y_test = test_set_spark.select(self.config.target).toPandas()
+
+        whl_name = "mlops_with_databricks-0.0.1-py3-none-any.whl"
+        whl_path = f"code/{whl_name}"
+        code_path = "dist/" + whl_name
+
+        logger.info("Configuring mlflow to log on databricks")
+        mlflow.set_tracking_uri("databricks://adb-tuidiworkspace")
+        mlflow.set_registry_uri("databricks-uc://adb-tuidiworkspace")
+
+        logger.info(f"Setting experiment: {experiment_name}")
+        mlflow.set_experiment(experiment_name=experiment_name)
+
+        logger.info("Start run")
+        with mlflow.start_run(tags=run_tags) as run:
+            run_id = run.info.run_id
+            logger.info(f"Start run (id: {run_id})")
+
+            logger.info("Training the model...")
+            self.train(X_train, y_train)
+
+            logger.info("Get predictions")
+            y_pred = self.predict(X_test)
+
+            accuracy = self.evaluate(y_test, y_pred)
+            logger.info(f"Accuracy: {accuracy}")
+
+            mlflow.log_param(
+                "model_type", "Random forest classifier with preprocessing"
+            )
+
+            mlflow.log_params(self.config.parameters)
+
+            mlflow.log_metric("accuracy", accuracy)
+
+            feature_importance_plot = self.get_feature_importance_plot()
+            mlflow.log_figure(
+                feature_importance_plot, "plots/feature_importance.png"
+            )
+
+            signature = infer_signature(
+                model_input=X_train, model_output=y_pred
+            )
+
+            table_version = get_table_version(spark, train_table_path)
+            dataset = mlflow.data.from_spark(
+                train_set_spark,
+                table_name=train_table_path,
+                version=table_version,
+            )
+            mlflow.log_input(dataset, context="training")
+
+            logger.info("Define conda environment.")
+            _mlflow_conda_env(
+                additional_conda_deps=None,
+                additional_pip_deps=[whl_path],
+                additional_conda_channels=None,
+            )
+
+            mlflow.pyfunc.log_model(
+                python_model=self,
                 artifact_path="randomforest-pipeline-model",
+                code_path=[code_path],
                 signature=signature,
             )
 
