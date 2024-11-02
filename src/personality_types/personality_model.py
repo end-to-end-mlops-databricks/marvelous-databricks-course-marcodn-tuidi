@@ -125,6 +125,7 @@ class PersonalityModel:
         spark: SparkSession,
         experiment_name: str,
         run_tags: Dict[str, Any],
+        model_name: str,
     ) -> ModelVersion:
         """
         Trains the model, evaluates it, and logs parameters, metrics, and
@@ -134,6 +135,7 @@ class PersonalityModel:
             spark (SparkSession): The active Spark session for loading data.
             experiment_name (str): The name of the MLflow experiment.
             run_tags (Dict[str, Any]): Metadata tags for the MLflow run.
+            model_name (str): Name of the registered model.
 
         Returns:
             ModelVersion: The versioned model registered in MLflow.
@@ -210,7 +212,7 @@ class PersonalityModel:
 
         model_version = mlflow.register_model(
             model_uri=f"runs:/{run_id}/randomforest-pipeline-model",
-            name=f"{shema_path}.personality_model_basic",
+            name=f"{shema_path}.{model_name}",
             tags=run_tags,
         )
 
