@@ -339,9 +339,13 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             mlflow.log_input(dataset, context="training")
 
             logger.info("Define conda environment.")
-            _mlflow_conda_env(
+            conda_env = _mlflow_conda_env(
                 additional_conda_deps=None,
-                additional_pip_deps=[whl_path],
+                additional_pip_deps=[
+                    whl_path,
+                    "pyspark==3.5.0",
+                    "delta-spark==3.0.0",
+                ],
                 additional_conda_channels=None,
             )
 
@@ -350,6 +354,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
                 artifact_path="randomforest-pipeline-model",
                 code_path=[code_path],
                 signature=signature,
+                conda_env=conda_env,
             )
 
         model_version = mlflow.register_model(
