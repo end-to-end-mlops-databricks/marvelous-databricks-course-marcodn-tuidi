@@ -71,7 +71,7 @@ class PersonalityModelProb(mlflow.pyfunc.PythonModel):
             ValueError: If `model_input` is not a pandas DataFrame.
         """
         if isinstance(model_input, pd.DataFrame):
-            predictions = self.model.predict(model_input)
+            predictions = self.model.predict(None, model_input)
             prob_prediction = self.model.predict_proba(model_input)
             return custom_predictions(predictions, prob_prediction)
         else:

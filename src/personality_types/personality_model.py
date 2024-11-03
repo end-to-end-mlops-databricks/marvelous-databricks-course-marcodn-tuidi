@@ -21,6 +21,7 @@ from databricks.sdk.service.serving import (
 from matplotlib.figure import Figure
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models import infer_signature
+from mlflow.pyfunc import PythonModelContext
 from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import DataFrame, SparkSession
 from sklearn.compose import ColumnTransformer
@@ -95,18 +96,47 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         """
         self.model.fit(X_train, y_train)
 
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
+    def predict(
+        self, context: PythonModelContext, model_input: Any
+    ) -> np.ndarray:
         """
         Method that generates predictions using the trained model on the
         provided data.
 
         Args:
-            X (pd.DataFrame): Data to use for making the predictions.
+            model_input (Any): Data to use for making the predictions.
+                This can be in various formats such as dictionary, list, or
+                DataFrame as received from the endpoint.
 
         Returns:
             np.ndarray: Array of predicted classes.
         """
-        return self.model.predict(X)
+        # Handle different input formats
+        if isinstance(model_input, dict):
+            # If using "dataframe_split" format
+            if "data" in model_input and "columns" in model_input:
+                model_input = pd.DataFrame(
+                    data=model_input["data"], columns=model_input["columns"]
+                )
+
+            # If using "dataframe_records" format
+            elif "dataframe_records" in model_input:
+                model_input = pd.DataFrame(model_input["dataframe_records"])
+
+        elif isinstance(model_input, list):
+            # If a list of lists, convert it to DataFrame with default columns
+            # if needed
+            model_input = pd.DataFrame(model_input)
+
+        elif not isinstance(model_input, pd.DataFrame):
+            # If not in expected format, raise an error
+            raise ValueError("Unsupported input format for model prediction")
+        """if isinstance(self, PersonalityModel):
+            model = self.model
+        else:
+            model = self.unwrap_python_model()"""
+        predictions = self.model.predict(model_input)
+        return predictions
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
         """
@@ -209,7 +239,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             self.train(X_train, y_train)
 
             logger.info("Get predictions")
-            y_pred = self.predict(X_test)
+            y_pred = self.predict(None, X_test)
 
             accuracy = self.evaluate(y_test, y_pred)
             logger.info(f"Accuracy: {accuracy}")
@@ -308,7 +338,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             self.train(X_train, y_train)
 
             logger.info("Get predictions")
-            y_pred = self.predict(X_test)
+            y_pred = self.predict(None, X_test)
 
             accuracy = self.evaluate(y_test, y_pred)
             logger.info(f"Accuracy: {accuracy}")
@@ -419,7 +449,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             self.train(X_train, y_train)
 
             logger.info("Get predictions")
-            y_pred = self.predict(X_test)
+            y_pred = self.predict(None, X_test)
 
             accuracy = self.evaluate(y_test, y_pred)
             logger.info(f"Accuracy: {accuracy}")
@@ -475,7 +505,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         drop_columns = ["id", "update_timestamp_utc", self.config.target]
         df_prediction = df[["id", "gender", "age"]]
         df = df.drop(drop_columns, axis=1)
-        df_prediction["predicted_class"] = self.predict(df)
+        df_prediction["predicted_class"] = self.predict(None, df)
 
         df_prediction_spark = spark.createDataFrame(df_prediction)
 
