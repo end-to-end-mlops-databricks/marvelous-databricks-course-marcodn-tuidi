@@ -35,6 +35,27 @@ class PersonalityTypesModelWrapper(mlflow.pyfunc.PythonModel):
         self.model_b = models[1]
 
     def predict(self, context: PythonModelContext, model_input: pd.DataFrame):
+        """
+        Model wrapper predictions for a/b testing. The input data is id hashed
+        and then converted to int. Even transformed id are predicted by model
+        a and odds ones by model b. This ensures traffic split and consistency
+        between then input and then model used for prediction.
+
+        Args:
+            contect (PythonModelContext): : MLflow context, providing access to
+                model artifacts and environment configuration.
+            model_input (pd.DataFrame): Input features for the model, expected
+                as a pandas DataFrame.
+
+        Returns:
+            Any: A dictionary containing predicted class labels and the model
+            used for the prediction.
+                - "Prediction": Predicted class.
+                - "model": Used model.
+
+        Raises:
+            ValueError: If `model_input` is not a pandas DataFrame.
+        """
         if isinstance(model_input, pd.DataFrame):
             input_id = str(model_input["id"].values[0])
             hashed_id = hashlib.md5(
@@ -68,6 +89,28 @@ class PersonalityTypesModelWrapper(mlflow.pyfunc.PythonModel):
         run_tags: Dict[str, Any],
         model_name: str,
     ) -> int:
+        """
+        Logs the wrapper model to MLflow, including metadata,
+        artifacts, and environment configuration, and registers it in the
+        MLflow Model Registry.
+
+        Args:
+            spark (SparkSession): The active Spark session for loading data.
+            config (ProjectConfig): A configuration object containing model's
+                hyperparameters.
+            train_set_spark (DataFrame): Example of train set dataframe for
+                input data logging and signature inference.
+            experiment_name (str): The MLflow experiment name for logging
+                model information.
+            run_tags (Dict[str, Any]): Tags for the MLflow run, adding metadata
+                to the logged model.
+            model_version_alias (str): Alias for the registered model version,
+                allowing easier access to the model in production.
+
+        Returns:
+            ModelVersion: The registered model version in the MLflow Model
+            Registry with the specified alias.
+        """
         schema_path = f"{config.catalog_name}.{config.schema_name}"
         mlflow.set_experiment(experiment_name=experiment_name)
         model_name = f"{schema_path}.{model_name}"
