@@ -195,6 +195,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         experiment_name: str,
         run_tags: Dict[str, Any],
         model_name: str,
+        model_alias: Optional[str] = None,
     ) -> ModelVersion:
         """
         Trains the model, evaluates it, and logs parameters, metrics, and
@@ -205,6 +206,8 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             experiment_name (str): The name of the MLflow experiment.
             run_tags (Dict[str, Any]): Metadata tags for the MLflow run.
             model_name (str): Name of the registered model.
+            model_alias (Optional, str): Model alias. If None, no alias is
+                assigned to the model. Default None.
 
         Returns:
             ModelVersion: The versioned model registered in MLflow.
@@ -280,6 +283,13 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             name=f"{shema_path}.{model_name}",
             tags=run_tags,
         )
+
+        if model_alias is not None:
+            mlflow.MlflowClient().set_registered_model_alias(
+                f"{shema_path}.{model_name}",
+                model_alias,
+                f"{model_version.version}",
+            )
 
         return model_version
 
