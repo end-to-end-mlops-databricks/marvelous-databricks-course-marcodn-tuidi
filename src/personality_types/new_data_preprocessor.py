@@ -121,6 +121,14 @@ class NewDataProcessor:
         logger.info(f"New train rows: {affected_rows_train}")
         logger.info(f"New test rows: {affected_rows_test}")
 
+        new_data_train.write.mode("append").saveAsTable(
+            f"{schema_path}.{train_table_name}"
+        )
+        new_data_test.write.mode("append").saveAsTable(
+            f"{schema_path}.{test_table_name}"
+        )
+        logger.info("Data added to train and test delta.")
+
         if affected_rows_train > 0 or affected_rows_test > 0:
             spark.sql(
                 f"""
@@ -156,6 +164,8 @@ class NewDataProcessor:
                 pipeline_id=self.config.pipeline_id,
                 full_refresh=False,
             )
+            logger.info("Feature table updated.")
+
             while True:
                 update_info = self.workspace.pipelines.get_update(
                     pipeline_id=self.config.pipeline_id,
@@ -163,6 +173,7 @@ class NewDataProcessor:
                 )
                 state = update_info.update.state.value
                 if state == "COMPLETED":
+                    logger.info("Online table updated.")
                     break
                 elif state in ["FAILED", "CANCELED"]:
                     raise SystemError("Online table failed to update.")
