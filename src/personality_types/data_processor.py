@@ -311,7 +311,7 @@ class DataProcessor:
         train_path = f"{schema_path}.{train_table_name}"
         test_path = f"{schema_path}.{test_table_name}"
         train_table = self.load_delta(spark, train_path)
-        test_table = self.load_data(spark, test_path)
+        test_table = self.load_delta(spark, test_path)
         source_table = train_table.unionByName(test_table)
 
         source_table_path = f"{schema_path}.source_table"
