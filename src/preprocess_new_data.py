@@ -22,4 +22,12 @@ processor = NewDataProcessor(
     "test_set",
 )
 
-print(processor.latest_timestamp)
+logger.info(f"Last processed maximum date: {processor.latest_timestamp}")
+
+processor.load_new_data_to_train_test(
+    spark,
+    "source_table",
+    "train_set",
+    "test_set",
+    "personality_features",
+)
