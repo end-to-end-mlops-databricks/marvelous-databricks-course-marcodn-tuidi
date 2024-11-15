@@ -1,16 +1,15 @@
 import time
 from datetime import datetime
 
-import IPython
 import pyspark.sql.functions as F
 from databricks.sdk import WorkspaceClient
 from pyspark.sql import DataFrame, SparkSession
 
 from personality_types.config import ProjectConfig
+from personality_types.utils.dbutils_utils import get_dbutils
 from personality_types.utils.logger_utils import set_logger
 
 logger = set_logger()
-dbutils = IPython.get_ipython().user_ns["dbutils"]
 
 
 class NewDataProcessor:
@@ -185,4 +184,5 @@ class NewDataProcessor:
         else:
             refreshed = 0
 
+        dbutils = get_dbutils(spark)
         dbutils.jobs.taskValues.set(key="refreshed", value=refreshed)
