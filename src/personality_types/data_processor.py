@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 import pandas as pd
 import pyspark.sql.functions as F
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
@@ -72,6 +72,20 @@ class DataProcessor:
             pd.DataFrame: Loaded dataset.
         """
         return spark.read.csv(data_path, header=True).toPandas()
+
+    def load_delta(self, spark: SparkSession, table_name: str) -> DataFrame:
+        """
+        Loads the dataset from the specified delta table in catalog.
+
+        Args:
+            spark (SparkSession): current spark session.
+            table_name (str): Name of the table to load.
+
+        Returns:
+            DataFrame: Loaded dataset.
+        """
+        schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        return spark.table(f"{schema_path}.{table_name}")
 
     @staticmethod
     def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -275,6 +289,25 @@ class DataProcessor:
         spark.sql(
             f"""
             ALTER TABLE {test_table_path}
+            SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')
+            """
+        )
+
+    def create_source_table(
+        self, spark: SparkSession, train_path: str, test_path: str
+    ) -> None:
+        train_table = self.load_delta(spark, train_path)
+        test_table = self.load_data(spark, test_path)
+        source_table = train_table.unionByName(test_table)
+
+        schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        source_table_path = f"{schema_path}.source_table"
+
+        source_table.write.mode("append").saveAsTable(source_table_path)
+
+        spark.sql(
+            f"""
+            ALTER TABLE {source_table_path}
             SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')
             """
         )
