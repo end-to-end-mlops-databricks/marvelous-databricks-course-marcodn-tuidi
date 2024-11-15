@@ -412,6 +412,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         experiment_name: str,
         run_tags: Dict[str, Any],
         training_set: Any,
+        register_model: Optional[bool] = True,
     ) -> ModelVersion:
         """
         Trains the model using data from the Feature Engineering client,
@@ -425,9 +426,12 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
             run_tags (Dict[str, Any]): Metadata tags for the MLflow run.
             training_set (Any): Dataset provided by FeatureEngineeringClient
                 for training.
+            register_model (Optional, bool): True if the model is registered
+                after logging. Default is True.
 
         Returns:
-            ModelVersion: The versioned model registered in MLflow.
+            ModelVersion: The versioned model registered in MLflow. Returns -1
+                if the model is not registered.
         """
         training_df = training_set.load_df().toPandas()
         shema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
@@ -489,11 +493,13 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
                 signature=signature,
             )
 
-        model_version = mlflow.register_model(
-            model_uri=f"runs:/{run_id}/randomforest-pipeline-model-fe",
-            name=f"{shema_path}.personality_model_fe",
-            tags=run_tags,
-        )
+        model_version = -1
+        if register_model:
+            model_version = mlflow.register_model(
+                model_uri=f"runs:/{run_id}/randomforest-pipeline-model-fe",
+                name=f"{shema_path}.personality_model_fe",
+                tags=run_tags,
+            )
 
         return model_version
 
