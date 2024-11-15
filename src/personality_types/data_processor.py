@@ -294,13 +294,26 @@ class DataProcessor:
         )
 
     def create_source_table(
-        self, spark: SparkSession, train_path: str, test_path: str
+        self, spark: SparkSession, train_table_name: str, test_table_name: str
     ) -> None:
+        """
+        Save the source table to be used for the rest of the project.
+        Source table is the concatenation of train and test data extracted
+        from the csv file loaded in the volume.
+
+        Args:
+            spark (SparkSession): current spark session.
+            train_table_name (str): Name of the train table to load.
+            test_table_name (str): Name of the test table to load.
+
+        """
+        schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
+        train_path = f"{schema_path}.{train_table_name}"
+        test_path = f"{schema_path}.{test_table_name}"
         train_table = self.load_delta(spark, train_path)
         test_table = self.load_data(spark, test_path)
         source_table = train_table.unionByName(test_table)
 
-        schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
         source_table_path = f"{schema_path}.source_table"
 
         source_table.write.mode("append").saveAsTable(source_table_path)
