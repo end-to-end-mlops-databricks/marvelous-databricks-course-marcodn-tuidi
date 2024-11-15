@@ -8,11 +8,12 @@ from mlflow.models import infer_signature
 from mlflow.pyfunc import PythonModelContext
 from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import SparkSession
-from src.personality_types.config import ProjectConfig
-from src.personality_types.personality_model import PersonalityModel
-from src.utils.delta_utils import get_table_version
-from src.utils.logger_utils import set_logger
-from src.utils.predictions_utils import custom_predictions
+
+from personality_types.config import ProjectConfig
+from personality_types.personality_model import PersonalityModel
+from personality_types.utils.delta_utils import get_table_version
+from personality_types.utils.logger_utils import set_logger
+from personality_types.utils.predictions_utils import custom_predictions
 
 logger = set_logger()
 
@@ -70,7 +71,7 @@ class PersonalityModelProb(mlflow.pyfunc.PythonModel):
             ValueError: If `model_input` is not a pandas DataFrame.
         """
         if isinstance(model_input, pd.DataFrame):
-            predictions = self.model.predict(model_input)
+            predictions = self.model.predict(None, model_input)
             prob_prediction = self.model.predict_proba(model_input)
             return custom_predictions(predictions, prob_prediction)
         else:
@@ -115,19 +116,14 @@ class PersonalityModelProb(mlflow.pyfunc.PythonModel):
 
         model_name = f"{shema_path}.personality_model_prob"
 
-        whl_name = "personality_type-latest-py3-none-any.whl"
+        whl_name = "mlops_with_databricks-0.0.1-py3-none-any.whl"
         whl_path = f"code/{whl_name}"
-        vloume_path = "/Volumes/marvelous_dev_ops/personality_types/package/"
-        code_path = vloume_path + whl_name
+        code_path = "dist/" + whl_name
 
         example_input = X_train.iloc[0:1]
         example_prediction = self.predict(
             context=None, model_input=example_input
         )
-
-        logger.info("Configuring mlflow to log on databricks")
-        mlflow.set_tracking_uri("databricks")
-        mlflow.set_registry_uri("databricks-uc")
 
         logger.info(f"Setting experiment: {experiment_name}")
         mlflow.set_experiment(experiment_name=experiment_name)

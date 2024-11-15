@@ -6,7 +6,8 @@ from databricks.feature_engineering import (
     FeatureLookup,
 )
 from pyspark.sql import SparkSession
-from src.personality_types.config import ProjectConfig
+
+from personality_types.config import ProjectConfig
 
 
 class TrainingSetBuilder:

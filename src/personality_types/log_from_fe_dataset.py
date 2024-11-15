@@ -6,9 +6,10 @@ from mlflow.entities.model_registry import ModelVersion
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
-from src.personality_types.config import ProjectConfig
-from src.personality_types.personality_model import PersonalityModel
-from src.utils.logger_utils import set_logger
+
+from personality_types.config import ProjectConfig
+from personality_types.personality_model import PersonalityModel
+from personality_types.utils.logger_utils import set_logger
 
 logger = set_logger()
 

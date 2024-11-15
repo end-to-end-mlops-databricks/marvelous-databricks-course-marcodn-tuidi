@@ -9,8 +9,9 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from src.personality_types.config import ProjectConfig
-from src.personality_types.custom_transforms import (
+
+from personality_types.config import ProjectConfig
+from personality_types.custom_transforms import (
     EducationTransform,
     GenderTransform,
 )
@@ -34,37 +35,43 @@ class DataProcessor:
     """
 
     def __init__(
-        self, data_path: str, train: bool, config: ProjectConfig
+        self,
+        spark: SparkSession,
+        data_path: str,
+        train: bool,
+        config: ProjectConfig,
     ) -> None:
         """
         Initializes the DataProcessor with the data path, training flag,
         and configuration.
 
         Args:
+            spark (SparkSession): current spark session.
             data_path (str): Path to the CSV file containing the dataset.
             train (bool): A flag indicating whether it's training mode (True)
                 or inference mode (False).
             config (dict): Configuration dictionary containing feature names
                 and target variable details.
         """
-        self.df = self.rename_columns(self.load_data(data_path))
+        self.df = self.rename_columns(self.load_data(spark, data_path))
         self.train = train
         self.config = config
         self.X = None
         self.y = None
         self.preprocessor = None
 
-    def load_data(self, data_path: str) -> pd.DataFrame:
+    def load_data(self, spark: SparkSession, data_path: str) -> pd.DataFrame:
         """
         Loads the dataset from the specified CSV file path.
 
         Args:
+            spark (SparkSession): current spark session.
             data_path (str): Path to the CSV file.
 
         Returns:
             pd.DataFrame: Loaded dataset.
         """
-        return pd.read_csv(data_path)
+        return spark.read.csv(data_path, header=True).toPandas()
 
     @staticmethod
     def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
