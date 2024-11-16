@@ -46,7 +46,8 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
         config (ProjectConfig): A configuration object containing model's
             hyperparameters.
         model (Pipeline): Pipeline containing a preprocessing step and a
-        random forest classifier.
+            random forest classifier.
+        model_uri (str): Uri of the logged model.
     """
 
     def __init__(
@@ -83,6 +84,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
                     ("classifier", base_model),
                 ]
             )
+        self.model_uri = None
 
     def train(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
         """
@@ -278,8 +280,9 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
                 signature=signature,
             )
 
+        self.model_uri = f"runs:/{run_id}/randomforest-pipeline-model-simple"
         model_version = mlflow.register_model(
-            model_uri=f"runs:/{run_id}/randomforest-pipeline-model-simple",
+            model_uri=self.model_uri,
             name=f"{shema_path}.{model_name}",
             tags=run_tags,
         )
@@ -397,8 +400,10 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
                 conda_env=conda_env,
             )
 
+        self.model_uri = f"runs:/{run_id}/randomforest-pipeline-model"
+
         model_version = mlflow.register_model(
-            model_uri=f"runs:/{run_id}/randomforest-pipeline-model",
+            model_uri=self.model_uri,
             name=f"{shema_path}.{model_name}",
             tags=run_tags,
         )
@@ -493,10 +498,11 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
                 signature=signature,
             )
 
+        self.model_uri = (f"runs:/{run_id}/randomforest-pipeline-model-fe",)
         model_version = -1
         if register_model:
             model_version = mlflow.register_model(
-                model_uri=f"runs:/{run_id}/randomforest-pipeline-model-fe",
+                model_uri=self.model_uri,
                 name=f"{shema_path}.personality_model_fe",
                 tags=run_tags,
             )
