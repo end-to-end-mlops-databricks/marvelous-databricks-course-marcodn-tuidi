@@ -1,5 +1,6 @@
 catalog_name: marvelous_dev_ops
 schema_name: personality_types
+pipeline_id: 8318441b-5461-4ea5-ba29-26e1f015b54e
 
 parameters:
   n_estimators: 100
