@@ -59,7 +59,7 @@ class Comparator:
         fe: FeatureEngineeringClient,
         model_name: str,
         run_tags: Dict[str, Any],
-    ):
+    ) -> None:
         schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
 
         predictions_old = fe.score_batch(
