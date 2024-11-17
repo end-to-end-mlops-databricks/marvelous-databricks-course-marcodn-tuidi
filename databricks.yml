@@ -4,13 +4,132 @@
 
 bundle:
   name: marvelous-databricks-course-marcodn-tuidi
+  cluster_id: 1017-140639-mzv9yp4e
+
+artifacts:
+  default:
+    type: whl
+    build: python -m build
+    path: .
+
+variables:
+  root_path:
+    description: root_path for the target
+    default: /Users/marco.dinardo@tuidi.it/.bundle/${bundle.target}/${bundle.name}
+  git_sha:
+    description: git_sha
+    default: abcd
+  schedule_pause_status:
+    description: schedule pause status
+    default: UNPAUSED
+
+resources:
+  jobs:
+    personality-types:
+      name: personality-types-workflow-test-demo
+      schedule:
+        quartz_cron_expression: "0 0 6 ? * MON"
+        timezone_id: "Europe/Rome"
+        pause_status: ${var.schedule_pause_status}
+      tags:
+        project_name: "personality-types"
+      job_clusters:
+        - job_cluster_key: "personality-types-cluster"
+          new_cluster:
+            spark_version: "15.4.x-scala2.12"
+            data_security_mode: "SINGLE_USER"
+            node_type_id: "Standard_DS4_v2"
+            driver_node_type_id: "Standard_DS4_v2"
+            autoscale:
+              min_workers: 1
+              max_workers: 1
+
+      tasks:
+        - task_key: "preprocessing"
+          job_cluster_key: "personality-types-cluster"
+          # existing_cluster_id: 1014-134439-1sgb0b2m
+          spark_python_task:
+            python_file: "src/preprocess_new_data.py"
+            parameters:
+              - "--root_path"
+              - ${var.root_path}
+          libraries:
+            - whl: ./dist/*.whl
+        - task_key: if_refreshed
+          condition_task:
+            op: "EQUAL_TO"
+            left: "{{tasks.preprocessing.values.refreshed}}"
+            right: "1"
+          depends_on:
+            - task_key: "preprocessing"
+        - task_key: "train_model"
+          depends_on:
+            - task_key: "if_refreshed"
+              outcome: "true"
+          job_cluster_key: "personality-types-cluster"
+          # existing_cluster_id: 1014-134439-1sgb0b2m
+          spark_python_task:
+            python_file: "src/train_fe_model.py"
+            parameters:
+              - "--root_path"
+              - ${var.root_path}
+              - "--git_sha"
+              - ${var.git_sha}
+              - "--job_run_id"
+              - "{{job.id}}"
+          libraries:
+            - whl: ./dist/*.whl
+        - task_key: "evaluate_model"
+          depends_on:
+            - task_key: "train_model"
+          job_cluster_key: "personality-types-cluster"
+          # existing_cluster_id: 1014-134439-1sgb0b2m
+          spark_python_task:
+            python_file: "week5/evaluate.py"
+            parameters:
+              - "--root_path"
+              - ${var.root_path}
+              - "--new_model_uri"
+              - "{{tasks.train_model.values.new_model_uri}}"
+              - "--job_run_id"
+              - "{{job.id}}"
+              - "--git_sha"
+              - ${var.git_sha}
+          libraries:
+            - whl: ./dist/*.whl
+        - task_key: model_update
+          condition_task:
+            op: "EQUAL_TO"
+            left: "{{tasks.evaluate_model.values.model_update}}"
+            right: "1"
+          depends_on:
+            - task_key: "evaluate_model"
+        - task_key: "deploy_model"
+          depends_on:
+            - task_key: "model_update"
+              outcome: "true"
+          job_cluster_key: "personality-types-cluster"
+          # existing_cluster_id: 1014-134439-1sgb0b2m
+          spark_python_task:
+            python_file: "week5/deploy.py"
+            parameters:
+              - "--root_path"
+              - ${var.root_path}
+          libraries:
+            - whl: ./dist/*.whl
 
 targets:
+  prod:
+    workspace:
+      host: https://adb-3290835098342339.19.azuredatabricks.net
+      root_path: ${var.root_path}
   dev:
     mode: development
     default: true
     workspace:
       host: https://adb-3290835098342339.19.azuredatabricks.net
+      root_path: ${var.root_path}
+    cluster_id: 1017-140639-mzv9yp4e
 
   ## Optionally, there could be 'staging' or 'prod' targets here.
   #
