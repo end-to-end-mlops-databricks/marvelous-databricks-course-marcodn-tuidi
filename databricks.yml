@@ -85,7 +85,7 @@ resources:
           job_cluster_key: "personality-types-cluster"
           # existing_cluster_id: 1014-134439-1sgb0b2m
           spark_python_task:
-            python_file: "week5/evaluate.py"
+            python_file: "src/evaluate.py"
             parameters:
               - "--root_path"
               - ${var.root_path}
@@ -111,7 +111,7 @@ resources:
           job_cluster_key: "personality-types-cluster"
           # existing_cluster_id: 1014-134439-1sgb0b2m
           spark_python_task:
-            python_file: "week5/deploy.py"
+            python_file: "src/deploy.py"
             parameters:
               - "--root_path"
               - ${var.root_path}
