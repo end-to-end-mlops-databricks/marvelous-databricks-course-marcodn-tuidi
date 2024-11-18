@@ -56,9 +56,7 @@ dbutils = get_dbutils(spark)
 workspace = WorkspaceClient()
 
 logger = set_logger()
-config = ProjectConfig.from_yaml(
-    config_path=f"{args.root_path}/project_config.yml"
-)
+config = ProjectConfig.from_yaml(config_path="../project_config.yml")
 logger.info("Configuration loaded.")
 
 run_tags = {

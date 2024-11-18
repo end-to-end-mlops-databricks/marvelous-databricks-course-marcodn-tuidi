@@ -22,9 +22,7 @@ parser.add_argument(
 args = parser.parse_args()
 root_path = args.root_path
 
-config = ProjectConfig.from_yaml(
-    config_path=f"{args.root_path}/project_config.yml"
-)
+config = ProjectConfig.from_yaml(config_path="../project_config.yml")
 logger.info("Configuration loaded.")
 
 spark = SparkSession.builder.getOrCreate()

@@ -21,9 +21,7 @@ spark = SparkSession.builder.getOrCreate()
 
 logger = set_logger()
 
-config = ProjectConfig.from_yaml(
-    config_path=f"{args.root_path}/project_config.yml"
-)
+config = ProjectConfig.from_yaml(config_path="../project_config.yml")
 logger.info("Configuration loaded.")
 
 workspace = WorkspaceClient()
