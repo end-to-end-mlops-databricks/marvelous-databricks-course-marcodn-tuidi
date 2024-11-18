@@ -128,7 +128,7 @@ class NewDataProcessor:
         )
         logger.info("Data added to train and test delta.")
 
-        if affected_rows_train >= 0 or affected_rows_test >= 0:
+        if affected_rows_train > 0 or affected_rows_test > 0:
             spark.sql(
                 f"""
                 WITH max_timestamp AS (
