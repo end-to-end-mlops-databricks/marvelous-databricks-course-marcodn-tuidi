@@ -128,7 +128,7 @@ class NewDataProcessor:
         )
         logger.info("Data added to train and test delta.")
 
-        if affected_rows_train > 0 or affected_rows_test > 0:
+        if affected_rows_train >= 0 or affected_rows_test >= 0:
             spark.sql(
                 f"""
                 WITH max_timestamp AS (
@@ -182,7 +182,7 @@ class NewDataProcessor:
                     logger.info(f"Pipeline is in {state} state.")
                 time.sleep(30)
         else:
-            refreshed = 0
+            refreshed = 1
 
         dbutils = get_dbutils(spark)
         dbutils.jobs.taskValues.set(key="refreshed", value=refreshed)
