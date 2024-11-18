@@ -29,8 +29,8 @@ class Comparator:
         self.old_model_uri = self.get_old_model_uri(workspace, endpoint_name)
         self.new_model_uri = new_model_uri
         self.test_set = self.load_test_set(test_table_name, udf_name)
-        self.X_test = self.test_set.drop("id", self.config.target)
-        self.y_test = self.test_set.select("id", self.config.target)
+        self.X_test = self.test_set.drop(self.config.target)
+        self.y_test = self.test_set.select(self.config.target)
 
     def get_old_model_uri(
         self, workspace: WorkspaceClient, endpoint_name: str
