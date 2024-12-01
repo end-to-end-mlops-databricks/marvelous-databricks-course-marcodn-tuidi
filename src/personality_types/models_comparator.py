@@ -14,6 +14,22 @@ logger = set_logger()
 
 
 class Comparator:
+    """
+    A class designed to compare the performance of two machine learning models
+    (old and new) on a test dataset and determine which model performs better.
+
+    Attributes:
+        spark (SparkSession): The active Spark session for data processing.
+        config (ProjectConfig): Configuration object containing feature names
+            and other processing parameters.
+        old_model_uri (str): URI of the old model being served.
+        new_model_uri (str): URI of the new model to be compared.
+        test_set (DataFrame): The test dataset loaded for evaluation.
+        X_test (DataFrame): The test dataset features without the target
+            variable.
+        y_test (DataFrame): The test dataset target variable with IDs.
+    """
+
     def __init__(
         self,
         spark: SparkSession,
@@ -24,6 +40,21 @@ class Comparator:
         test_table_name: str,
         udf_name: str,
     ) -> None:
+        """
+        Initializes the Comparator class with the test dataset and model URIs.
+
+        Args:
+            spark (SparkSession): The active Spark session.
+            workspace (WorkspaceClient): Databricks Workspace Client.
+            config (ProjectConfig): Configuration object containing feature
+                names and target variable details.
+            endpoint_name (str): Name of the endpoint serving the old model.
+            new_model_uri (str): URI of the new model to compare.
+            test_table_name (str): Name of the delta table containing test
+                data.
+            udf_name (str): Name of the UDF for custom test data
+                transformation.
+        """
         self.spark = spark
         self.config = config
         self.old_model_uri = self.get_old_model_uri(workspace, endpoint_name)
@@ -35,12 +66,36 @@ class Comparator:
     def get_old_model_uri(
         self, workspace: WorkspaceClient, endpoint_name: str
     ) -> str:
+        """
+        Retrieves the URI of the old model being served at the specified
+        endpoint.
+
+        Args:
+            workspace (WorkspaceClient): Databricks Workspace Client.
+            endpoint_name (str): Name of the endpoint serving the old model.
+
+        Returns:
+            str: URI of the old model.
+        """
         serving_endpoint = workspace.serving_endpoints.get(endpoint_name)
         model_name = serving_endpoint.config.served_models[0].model_name
         model_version = serving_endpoint.config.served_models[0].model_version
         return f"models:/{model_name}/{model_version}"
 
     def load_test_set(self, test_table_name: str, udf_name: str) -> DataFrame:
+        """
+        Loads and prepares the test dataset by applying necessary
+        transformations.
+
+        Args:
+            test_table_name (str): Name of the delta table containing test
+                data.
+            udf_name (str): Name of the UDF for custom test data
+                transformation.
+
+        Returns:
+            DataFrame: Prepared test dataset.
+        """
         schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
         test_set = (
             self.spark.table(f"{schema_path}.{test_table_name}")
@@ -60,6 +115,17 @@ class Comparator:
         model_name: str,
         run_tags: Dict[str, Any],
     ) -> None:
+        """
+        Compares the performance of the old and new models on the test dataset,
+        and registers the new model if it performs better.
+
+        Args:
+            fe (FeatureEngineeringClient): Feature Engineering client.
+            model_name (str): Name of the new model to register if it performs
+                better.
+            run_tags (Dict[str, Any]): Tags to attach to the new model during
+                registration.
+        """
         schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
 
         predictions_old = fe.score_batch(
