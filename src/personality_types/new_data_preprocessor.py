@@ -107,6 +107,25 @@ class NewDataProcessor:
         test_table_name: str,
         feature_table_name: str,
     ) -> None:
+        """
+        Loads new data into the train and test delta tables, updates the
+        feature table, and triggers an update of the online feature table.
+
+        Args:
+            spark (SparkSession): The active Spark session for processing data.
+            source_table_name (str): The name of the source delta table
+                containing new data.
+            train_table_name (str): The name of the delta table to append the
+                new training data.
+            test_table_name (str): The name of the delta table to append the
+                new testing data.
+            feature_table_name (str): The name of the feature table to update
+                with new features.
+
+        Raises:
+            SystemError: If the update of the online feature table fails or is
+                canceled.
+        """
         schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
         new_data = self.load_delta(spark, source_table_name).where(
             F.col("update_timestamp_utc") > self.latest_timestamp
