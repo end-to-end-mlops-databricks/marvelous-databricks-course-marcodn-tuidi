@@ -30,7 +30,7 @@ class Comparator:
         self.new_model_uri = new_model_uri
         self.test_set = self.load_test_set(test_table_name, udf_name)
         self.X_test = self.test_set.drop(self.config.target)
-        self.y_test = self.test_set.select(self.config.target)
+        self.y_test = self.test_set.select("id", self.config.target)
 
     def get_old_model_uri(
         self, workspace: WorkspaceClient, endpoint_name: str
@@ -63,12 +63,10 @@ class Comparator:
         schema_path = f"{self.config.catalog_name}.{self.config.schema_name}"
 
         predictions_old = fe.score_batch(
-            model_uri=self.old_model_uri,
-            df=self.X_test,
+            model_uri=self.old_model_uri, df=self.X_test, result_type="string"
         )
         predictions_new = fe.score_batch(
-            model_uri=self.new_model_uri,
-            df=self.X_test,
+            model_uri=self.new_model_uri, df=self.X_test, result_type="string"
         )
 
         predictions_old = predictions_old.withColumnRenamed(
@@ -100,6 +98,8 @@ class Comparator:
                 F.mean(F.col("error_new")).alias("acc_new"),
             )
         )
+
+        print(compare_df.toPandas().head())
 
         acc_old = compare_df.select("acc_old").collect()[0][0]
         acc_new = compare_df.select("acc_new").collect()[0][0]

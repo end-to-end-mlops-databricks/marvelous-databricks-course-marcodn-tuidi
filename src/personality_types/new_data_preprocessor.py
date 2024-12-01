@@ -182,7 +182,9 @@ class NewDataProcessor:
                     logger.info(f"Pipeline is in {state} state.")
                 time.sleep(30)
         else:
-            refreshed = 1
+            refreshed = 0
+
+        logger.info(f"Refreshed: {refreshed}")
 
         dbutils = get_dbutils(spark)
         dbutils.jobs.taskValues.set(key="refreshed", value=refreshed)

@@ -498,7 +498,7 @@ class PersonalityModel(mlflow.pyfunc.PythonModel):
                 signature=signature,
             )
 
-        self.model_uri = (f"runs:/{run_id}/randomforest-pipeline-model-fe",)
+        self.model_uri = f"runs:/{run_id}/randomforest-pipeline-model-fe"
         model_version = -1
         if register_model:
             model_version = mlflow.register_model(
